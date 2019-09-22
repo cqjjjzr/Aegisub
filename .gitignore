@@ -68,11 +68,7 @@ packages/desktop/aegisub.desktop.template
 packages/desktop/aegisub.appdata.xml
 packages/desktop/aegisub.appdata.xml.template
 src/aegisub
-src/libresrc/bitmap.cpp
-src/libresrc/bitmap.h
-src/libresrc/default_config.cpp
-src/libresrc/default_config.h
-src/libresrc/default_config_platform.json
+resources/configs/default_config_platform.json
 svn-revision.h
 svn_revision
 tests/*.json
@@ -96,3 +92,4 @@ vendor/luajit/src/luajit
 src/generated
 out
 temp
+CMakeSettings.json
