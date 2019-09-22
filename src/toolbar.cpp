@@ -21,7 +21,7 @@
 #include "command/command.h"
 #include "compat.h"
 #include "include/aegisub/hotkey.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "retina_helper.h"
 
@@ -31,7 +31,7 @@
 #include <libaegisub/signal.h>
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/interprocess/streams/bufferstream.hpp>
+#include <sstream>
 #include <vector>
 
 #include <wx/frame.h>
@@ -41,7 +41,7 @@ namespace {
 	json::Object const& get_root() {
 		static json::Object root;
 		if (root.empty()) {
-			boost::interprocess::ibufferstream stream((const char *)default_toolbar, sizeof(default_toolbar));
+			auto stream = std::stringstream(GET_DEFAULT_CONFIG(default_toolbar));
 			root = std::move(static_cast<json::Object&>(agi::json_util::parse(stream)));
 		}
 		return root;

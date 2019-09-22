@@ -41,7 +41,7 @@
 #include "../frame_main.h"
 #include "../include/aegisub/context.h"
 #include "../include/aegisub/subtitles_provider.h"
-#include "../libresrc/libresrc.h"
+#include <libaegisub/resources.h>
 #include "../options.h"
 #include "../project.h"
 #include "../selection_controller.h"

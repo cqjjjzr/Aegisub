@@ -22,7 +22,7 @@
 #include "frame_main.h"
 #include "help_button.h"
 #include "include/aegisub/context.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "search_replace_engine.h"
 #include "selection_controller.h"

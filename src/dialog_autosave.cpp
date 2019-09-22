@@ -16,7 +16,7 @@
 
 #include "compat.h"
 #include "format.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 
 #include <libaegisub/path.h>

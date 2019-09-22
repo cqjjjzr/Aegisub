@@ -34,12 +34,12 @@
 #include "../async_video_provider.h"
 #include "../compat.h"
 #include "../include/aegisub/context.h"
-#include "../libresrc/libresrc.h"
 #include "../options.h"
 #include "../project.h"
 #include "../utils.h"
 
 #include <libaegisub/make_unique.h>
+#include <libaegisub/resources.h>
 
 #include <wx/msgdlg.h>
 

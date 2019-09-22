@@ -47,7 +47,7 @@
 #include "command/command.h"
 #include "dialog_detached_video.h"
 #include "dialog_manager.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "main.h"
 #include "options.h"
 #include "project.h"

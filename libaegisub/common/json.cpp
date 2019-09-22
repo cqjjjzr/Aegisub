@@ -16,6 +16,8 @@
 /// @brief Parse JSON files and return json::UnknownElement
 /// @ingroup libaegisub io
 
+#include <sstream>
+
 #include "libaegisub/json.h"
 
 #include "libaegisub/cajun/reader.h"
@@ -41,7 +43,7 @@ json::UnknownElement parse(std::istream &stream) {
 	}
 }
 
-json::UnknownElement file(agi::fs::path const& file, std::pair<const char *, size_t> default_config) {
+json::UnknownElement file(agi::fs::path const& file, std::string default_config) {
 	try {
 		if (fs::FileExists(file))
 			return parse(*io::Open(file));
@@ -55,7 +57,7 @@ json::UnknownElement file(agi::fs::path const& file, std::pair<const char *, siz
 	catch (agi::Exception& e) {
 		LOG_E("json/file") << "Unexpected error when reading config file " << file << ": " << e.GetMessage();
 	}
-	boost::interprocess::ibufferstream stream(default_config.first, default_config.second);
+	auto stream = std::stringstream(default_config);
 	return parse(stream);
 }
 

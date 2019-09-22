@@ -34,7 +34,7 @@
 #include "format.h"
 #include "help_button.h"
 #include "include/aegisub/context.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 
 #include <libaegisub/signal.h>

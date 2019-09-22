@@ -60,7 +60,7 @@ int mru_index(const char *key) {
 }
 
 namespace agi {
-MRUManager::MRUManager(agi::fs::path const& config, std::pair<const char *, size_t> default_config, agi::Options *options)
+MRUManager::MRUManager(agi::fs::path const& config, std::string default_config, agi::Options *options)
 : config_name(config)
 , options(options)
 {

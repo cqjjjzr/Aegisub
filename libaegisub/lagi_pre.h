@@ -23,6 +23,7 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #ifdef _MSC_VER

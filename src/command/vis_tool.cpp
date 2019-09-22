@@ -17,7 +17,7 @@
 #include "command.h"
 
 #include "../include/aegisub/context.h"
-#include "../libresrc/libresrc.h"
+#include <libaegisub/resources.h>
 #include "../project.h"
 #include "../video_display.h"
 #include "../visual_tool_clip.h"

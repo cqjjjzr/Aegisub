@@ -42,7 +42,7 @@
 #include "../dialogs.h"
 #include "../frame_main.h"
 #include "../include/aegisub/context.h"
-#include "../libresrc/libresrc.h"
+#include <libaegisub/resources.h>
 #include "../main.h"
 #include "../options.h"
 #include "../project.h"

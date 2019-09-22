@@ -41,7 +41,7 @@
 #include "../format.h"
 #include "../include/aegisub/context.h"
 #include "../initial_line_state.h"
-#include "../libresrc/libresrc.h"
+#include <libaegisub/resources.h>
 #include "../options.h"
 #include "../project.h"
 #include "../selection_controller.h"

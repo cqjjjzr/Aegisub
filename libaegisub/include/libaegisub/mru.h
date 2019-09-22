@@ -43,7 +43,7 @@ public:
 
 	/// @brief Constructor
 	/// @param config File to load MRU values from
-	MRUManager(agi::fs::path const& config, std::pair<const char *, size_t> default_config, agi::Options *options = nullptr);
+	MRUManager(agi::fs::path const& config, std::string default_config, agi::Options *options = nullptr);
 
 	template<size_t N>
 	MRUManager(agi::fs::path const& file, const char (&default_config)[N])

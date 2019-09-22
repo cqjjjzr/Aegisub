@@ -17,7 +17,7 @@
 #include "colour_button.h"
 #include "format.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "validators.h"
 #include "video_provider_dummy.h"

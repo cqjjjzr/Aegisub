@@ -34,6 +34,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <cassert>
 #include <memory>
+#include <sstream>
 
 namespace {
 using namespace agi;
@@ -182,12 +183,12 @@ struct option_name_cmp {
 
 namespace agi {
 
-Options::Options(agi::fs::path const& file, std::pair<const char *, size_t> default_config, const OptionSetting setting)
+Options::Options(agi::fs::path const& file, std::string default_config, const OptionSetting setting)
 : config_file(file)
 , setting(setting)
 {
 	LOG_D("agi/options") << "New Options object";
-	boost::interprocess::ibufferstream stream(default_config.first, default_config.second);
+	auto stream = std::stringstream(default_config);
 	LoadConfig(stream);
 }
 

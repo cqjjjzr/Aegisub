@@ -29,7 +29,7 @@
 #include "command/command.h"
 #include "compat.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "persist_location.h"
 #include "project.h"
 #include "selection_controller.h"

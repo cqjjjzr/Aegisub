@@ -47,7 +47,7 @@
 #include "format.h"
 #include "frame_main.h"
 #include "include/aegisub/context.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "project.h"
 #include "subs_controller.h"
@@ -199,7 +199,7 @@ bool AegisubApp::OnInit() {
 	try {
 		if (!config::opt)
 			config::opt = new agi::Options(config::path->Decode("?user/config.json"), GET_DEFAULT_CONFIG(default_config));
-		boost::interprocess::ibufferstream stream((const char *)default_config_platform, sizeof(default_config_platform));
+		auto stream = std::stringstream(GET_DEFAULT_CONFIG(default_config));
 		config::opt->ConfigNext(stream);
 	} catch (agi::Exception& e) {
 		LOG_E("config/init") << "Caught exception: " << e.GetMessage();

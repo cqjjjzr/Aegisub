@@ -31,7 +31,7 @@
 #include "ass_file.h"
 #include "compat.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "utils.h"
 

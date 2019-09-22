@@ -27,7 +27,7 @@
 //
 // Aegisub Project http://www.aegisub.org/
 
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "format.h"
 #include "version.h"
 

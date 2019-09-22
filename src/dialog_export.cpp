@@ -32,7 +32,7 @@
 #include "compat.h"
 #include "include/aegisub/context.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "subtitle_format.h"
 #include "utils.h"
 

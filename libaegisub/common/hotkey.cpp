@@ -85,7 +85,7 @@ struct hotkey_visitor : json::ConstVisitor {
 };
 }
 
-Hotkey::Hotkey(fs::path const& file, std::pair<const char *, size_t> default_config)
+Hotkey::Hotkey(fs::path const& file, std::string default_config)
 : config_file(file)
 {
 	LOG_D("hotkey/init") << "Generating hotkeys.";

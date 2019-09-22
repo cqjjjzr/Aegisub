@@ -85,7 +85,7 @@ public:
 	/// Constructor
 	/// @param file           Location of user config file.
 	/// @param default_config Default config.
-	Hotkey(agi::fs::path const& file, std::pair<const char *, size_t> default_config);
+	Hotkey(agi::fs::path const& file, std::string default_config);
 
 	template<size_t N>
 	Hotkey(agi::fs::path const& file, const char (&default_config)[N])

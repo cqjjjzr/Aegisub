@@ -30,7 +30,7 @@
 #include "audio_controller.h"
 #include "audio_timing.h"
 #include "compat.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"

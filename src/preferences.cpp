@@ -28,7 +28,7 @@
 #include "include/aegisub/audio_player.h"
 #include "include/aegisub/hotkey.h"
 #include "include/aegisub/subtitles_provider.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "preferences_base.h"
 #include "video_provider_manager.h"

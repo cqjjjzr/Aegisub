@@ -16,7 +16,7 @@
 
 #include "include/aegisub/hotkey.h"
 
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "command/command.h"
 #include "compat.h"
 #include "options.h"

@@ -21,7 +21,7 @@
 #include "help_button.h"
 #include "include/aegisub/context.h"
 #include "include/aegisub/spellchecker.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "selection_controller.h"
 #include "text_selection_controller.h"

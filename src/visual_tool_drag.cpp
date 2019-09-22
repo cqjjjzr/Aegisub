@@ -24,7 +24,7 @@
 #include "ass_file.h"
 #include "compat.h"
 #include "include/aegisub/context.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "selection_controller.h"
 #include "video_controller.h"

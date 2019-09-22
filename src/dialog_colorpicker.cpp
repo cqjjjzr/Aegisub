@@ -30,7 +30,7 @@
 #include "colorspace.h"
 #include "compat.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "persist_location.h"
 #include "utils.h"

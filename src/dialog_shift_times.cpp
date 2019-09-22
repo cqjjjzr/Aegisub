@@ -21,7 +21,7 @@
 #include "format.h"
 #include "include/aegisub/context.h"
 #include "help_button.h"
-#include "libresrc/libresrc.h"
+#include "libaegisub/resources.h"
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"
