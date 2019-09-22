@@ -1,4 +1,5 @@
 from conans import ConanFile, CMake
+import os
 
 class AegisubConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
@@ -20,11 +21,13 @@ class AegisubConan(ConanFile):
     default_options = {}
 
     def imports(self):
-        self.copy("*.dll", dst="bin", src="bin")
-        self.copy("*.dylib*", dst="bin", src="lib")
+        dest = os.getenv("CONAN_IMPORT_PATH", "bin")
+        self.copy("*.dll", dst=dest, src="bin")
+        self.copy("*.dylib*", dst=dest, src="lib")
 
     def requirements(self):
         self.options["luajit"].lua52_compat = True
+        self.options["icu"].data_packaging = "static"
 
         self.options["ffmpeg"].extra_config_flags = "--enable-gpl --enable-runtime-cpudetect --enable-small"
         self.options["ffmpeg"].zlib = True
@@ -68,19 +71,19 @@ class AegisubConan(ConanFile):
         self.options["wxwidgets"].stc = True
         self.options["wxwidgets"].richtext = True
         self.options["wxwidgets"].sockets = True # this sucks
+        self.options["wxwidgets"].xml = True
+        self.options["wxwidgets"].html = True
+        self.options["wxwidgets"].xrc = True
 
         self.options["wxwidgets"].jpeg = "off"
         self.options["wxwidgets"].tiff = "off"
         self.options["wxwidgets"].secretstore = False
         self.options["wxwidgets"].aui = False
-        self.options["wxwidgets"].html = True
         self.options["wxwidgets"].mediactrl = False
         self.options["wxwidgets"].propgrid = False
         self.options["wxwidgets"].debugreport = False
         self.options["wxwidgets"].ribbon = False
         self.options["wxwidgets"].webview = False
-        self.options["wxwidgets"].xml = False
-        self.options["wxwidgets"].xrc = False
         if self.settings.os == "Linux":
             self.options["wxwidgets"].cairo = False
 
@@ -92,3 +95,4 @@ class AegisubConan(ConanFile):
             'stacktrace', 'test', 'type_erasure']
         for lib in [x for x in boost_lib_list if x not in boost_using_list]:
             self.options["boost"].add("without_" + lib + "=True")
+        self.options["boost"].use_icu=True

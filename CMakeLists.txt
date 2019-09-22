@@ -1,13 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
 cmake_policy(SET CMP0074 NEW)
+set(CMAKE_CXX_STANDARD 17)
 
 project(Aegisub)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-include_directories("build")
+include(cmake/dependencies.cmake)
+include(cmake/resources.cmake)
+
 include_directories("libaegisub/include")
-include_directories("vendor/luajit/include")
+
+add_subdirectory(dependencies/csri)
+include_directories(dependencies/csri/include)
 
 add_library(libaegisub STATIC
     libaegisub/common/parser.cpp
@@ -75,194 +80,10 @@ elseif(WIN32)
         libaegisub/windows/log_win.cpp
         libaegisub/windows/path_win.cpp
         libaegisub/windows/util_win.cpp
+        libaegisub/windows/resources_win.cpp
     )
 endif(UNIX)
 SET_TARGET_PROPERTIES(libaegisub PROPERTIES PREFIX "")
-
-add_library(luabins STATIC
-    vendor/luabins/src/fwrite.c
-    vendor/luabins/src/load.c
-    vendor/luabins/src/luabins.c
-    vendor/luabins/src/luainternals.c
-    vendor/luabins/src/save.c
-    vendor/luabins/src/savebuffer.c
-    vendor/luabins/src/write.c
-)
-
-add_executable(luajit-minilua vendor/luajit/src/host/minilua.c)
-if (NOT MSVC)
-target_link_libraries(luajit-minilua m)
-endif(NOT MSVC)
-if (WIN32)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        add_custom_command(TARGET luajit-minilua POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/vendor/luajit/src/gen
-            COMMAND luajit-minilua ../dynasm/dynasm.lua -LN -D WIN -D JIT -D FFI -D P64 -o gen/buildvm_arch.h vm_x86.dasc
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        )
-    else()
-        add_custom_command(TARGET luajit-minilua POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/vendor/luajit/src/gen
-            COMMAND luajit-minilua ../dynasm/dynasm.lua -LN -D WIN -D JIT -D FFI -o gen/buildvm_arch.h vm_x86.dasc
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        )
-    endif()
-else (WIN32)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        add_custom_command(TARGET luajit-minilua POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/vendor/luajit/src/gen
-            COMMAND luajit-minilua ../dynasm/dynasm.lua -D P64 -D JIT -D FFI -D FPU -D HFABI -D VER= -o gen/buildvm_arch.h vm_x86.dasc
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        )
-    else()
-        add_custom_command(TARGET luajit-minilua POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/vendor/luajit/src/gen
-            COMMAND luajit-minilua ../dynasm/dynasm.lua -D JIT -D FFI -D FPU -D HFABI -D VER= -o gen/buildvm_arch.h vm_x86.dasc
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        )
-    endif()
-endif (WIN32)
-add_custom_command(TARGET luajit-minilua POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/libresrc/default_config_win.json ${PROJECT_SOURCE_DIR}/src/libresrc/default_config_platform.json
-    COMMAND luajit-minilua ../../tools/respack.lua manifest.respack default_config.cpp default_config.h
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/libresrc
-    BYPRODUCTS ${PROJECT_SOURCE_DIR}/src/libresrc/default_config.cpp ${PROJECT_SOURCE_DIR}/src/libresrc/default_config.h
-)
-add_custom_command(TARGET luajit-minilua POST_BUILD
-    COMMAND luajit-minilua ../../tools/respack.lua manifest.respack ../libresrc/bitmap.cpp ../libresrc/bitmap.h
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/bitmaps
-    BYPRODUCTS ${PROJECT_SOURCE_DIR}/src/libresrc/bitmap.cpp ${PROJECT_SOURCE_DIR}/src/libresrc/bitmap.h
-)
-
-add_executable(luajit-buildvm
-    vendor/luajit/src/host/buildvm.c
-    vendor/luajit/src/host/buildvm_asm.c
-    vendor/luajit/src/host/buildvm_peobj.c
-    vendor/luajit/src/host/buildvm_lib.c
-    vendor/luajit/src/host/buildvm_fold.c
-)
-target_include_directories(luajit-buildvm PRIVATE vendor/luajit/src vendor/luajit/src/gen)
-add_dependencies(luajit-buildvm luajit-minilua)
-if(UNIX)
-    add_custom_command(TARGET luajit-buildvm POST_BUILD
-        COMMAND luajit-buildvm -m elfasm -o lj_vm.s
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        BYPRODUCTS ${PROJECT_SOURCE_DIR}/vendor/luajit/src/lj_vm.s
-    )
-    set_property(SOURCE vendor/luajit/src/lj_vm.s PROPERTY LANGUAGE C)
-elseif(MSVC)
-    add_custom_command(TARGET luajit-buildvm POST_BUILD
-        COMMAND luajit-buildvm -m peobj -o lj_vm.obj
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-        BYPRODUCTS ${PROJECT_SOURCE_DIR}/vendor/luajit/src/lj_vm.obj
-    )
-endif(UNIX)
-add_custom_command(TARGET luajit-buildvm POST_BUILD
-    COMMAND luajit-buildvm -m ffdef -o gen/lj_ffdef.h lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-    COMMAND luajit-buildvm -m bcdef -o gen/lj_bcdef.h lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-    COMMAND luajit-buildvm -m folddef -o gen/lj_folddef.h lj_opt_fold.c
-    COMMAND luajit-buildvm -m recdef -o gen/lj_recdef.h lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-    COMMAND luajit-buildvm -m libdef -o gen/lj_libdef.h lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-    COMMAND luajit-buildvm -m vmdef -o jit/vmdef.lua lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/vendor/luajit/src
-)
-target_compile_definitions(luajit-buildvm PRIVATE LUAJIT_ENABLE_LUA52COMPAT)
-
-
-add_library(luajit STATIC
-    vendor/luajit/src/lj_gc.c
-    vendor/luajit/src/lj_err.c
-    vendor/luajit/src/lj_char.c
-    vendor/luajit/src/lj_bc.c
-    vendor/luajit/src/lj_obj.c
-    vendor/luajit/src/lj_str.c
-    vendor/luajit/src/lj_tab.c
-    vendor/luajit/src/lj_func.c
-    vendor/luajit/src/lj_udata.c
-    vendor/luajit/src/lj_meta.c
-    vendor/luajit/src/lj_debug.c
-    vendor/luajit/src/lj_state.c
-    vendor/luajit/src/lj_dispatch.c
-    vendor/luajit/src/lj_vmevent.c
-    vendor/luajit/src/lj_vmmath.c
-    vendor/luajit/src/lj_strscan.c
-    vendor/luajit/src/lj_api.c
-    vendor/luajit/src/lj_lex.c
-    vendor/luajit/src/lj_parse.c
-    vendor/luajit/src/lj_bcread.c
-    vendor/luajit/src/lj_bcwrite.c
-    vendor/luajit/src/lj_load.c
-    vendor/luajit/src/lj_ir.c
-    vendor/luajit/src/lj_opt_mem.c
-    vendor/luajit/src/lj_opt_fold.c
-    vendor/luajit/src/lj_opt_narrow.c
-    vendor/luajit/src/lj_opt_dce.c
-    vendor/luajit/src/lj_opt_loop.c
-    vendor/luajit/src/lj_opt_split.c
-    vendor/luajit/src/lj_opt_sink.c
-    vendor/luajit/src/lj_mcode.c
-    vendor/luajit/src/lj_snap.c
-    vendor/luajit/src/lj_record.c
-    vendor/luajit/src/lj_crecord.c
-    vendor/luajit/src/lj_ffrecord.c
-    vendor/luajit/src/lj_asm.c
-    vendor/luajit/src/lj_trace.c
-    vendor/luajit/src/lj_gdbjit.c
-    vendor/luajit/src/lj_ctype.c
-    vendor/luajit/src/lj_cdata.c
-    vendor/luajit/src/lj_cconv.c
-    vendor/luajit/src/lj_ccall.c
-    vendor/luajit/src/lj_ccallback.c
-    vendor/luajit/src/lj_carith.c
-    vendor/luajit/src/lj_clib.c
-    vendor/luajit/src/lj_cparse.c
-    vendor/luajit/src/lj_lib.c
-    vendor/luajit/src/lj_alloc.c
-    vendor/luajit/src/lib_aux.c
-    vendor/luajit/src/lib_base.c
-    vendor/luajit/src/lib_math.c
-    vendor/luajit/src/lib_bit.c
-    vendor/luajit/src/lib_string.c
-    vendor/luajit/src/lib_table.c
-    vendor/luajit/src/lib_io.c
-    vendor/luajit/src/lib_os.c
-    vendor/luajit/src/lib_package.c
-    vendor/luajit/src/lib_debug.c
-    vendor/luajit/src/lib_jit.c
-    vendor/luajit/src/lib_ffi.c
-    vendor/luajit/src/lib_init.c
-)
-if(MSVC)
-    target_sources(luajit PRIVATE vendor/luajit/src/lj_vm.obj)
-else(MSVC)
-    target_sources(luajit PRIVATE vendor/luajit/src/lj_vm.s)
-    set_property(SOURCE vendor/luajit/src/lj_vm.s PROPERTY LANGUAGE C)
-    target_link_libraries(luajit dl)
-endif(MSVC)
-target_include_directories(luajit PRIVATE vendor/luajit/src/gen)
-add_dependencies(luajit luajit-buildvm)
-target_compile_definitions(luajit PRIVATE LUAJIT_ENABLE_LUA52COMPAT)
-
-add_library(resrc STATIC
-    src/libresrc/bitmap.cpp
-    src/libresrc/default_config.cpp
-    src/libresrc/libresrc.cpp
-)
-add_dependencies(resrc luajit-minilua)
-
-add_library(csri STATIC
-    vendor/csri/lib/list.c
-    vendor/csri/lib/wrap.c
-    vendor/csri/subhelp/logging.c
-)
-target_include_directories(csri PRIVATE "vendor/csri/include")
-IF (WIN32)
-    target_include_directories(csri PRIVATE "vendor/csri/lib/win32")
-    target_sources(csri PRIVATE vendor/csri/lib/win32/enumerate.c)
-ELSE()
-    target_include_directories(csri PRIVATE "vendor/csri/lib/posix")
-    target_sources(csri PRIVATE vendor/csri/lib/posix/enumerate.c)
-ENDIF()
 
 add_executable(Aegisub WIN32
     src/command/app.cpp
@@ -427,10 +248,11 @@ add_executable(Aegisub WIN32
     src/video_slider.cpp
     src/visual_feature.cpp
 )
-target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub luabins luajit resrc csri)
+target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub csri)
+conan_target_link_libraries(Aegisub)
 
 if (MSVC)
-    set_target_properties(libaegisub PROPERTIES COMPILE_FLAGS "/Yu${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h" COMPILE_FLAGS "/FI${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h")
+    target_compile_options(libaegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h")
 else(MSVC)
     target_compile_options(libaegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h")
 endif(MSVC)
@@ -442,11 +264,11 @@ set_property(
 )
 
 if (MSVC)
-    add_definitions("-DNOMINMAX -MP -DINITGUID")
-    set_target_properties(Aegisub PROPERTIES COMPILE_FLAGS "/Yu${PROJECT_SOURCE_DIR}/src/agi_pre.h" COMPILE_FLAGS "/FI${PROJECT_SOURCE_DIR}/src/agi_pre.h")
+    add_definitions("-DNOMINMAX -DINITGUID")
+    target_compile_options(Aegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/src/agi_pre.h" "-MP")
     target_link_libraries (Aegisub Usp10)
     #target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/crash_writer_minidump.cpp)
-    target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/crash_writer.cpp src/dpi_aware.manifest)
+    target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/generated/windows/resource.rc src/crash_writer.cpp src/dpi_aware.manifest)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Aegisub)
 else(MSVC)
     target_sources(Aegisub PRIVATE src/crash_writer.cpp)
@@ -456,53 +278,17 @@ endif(MSVC)
 if (WIN32)
     target_sources(Aegisub PRIVATE src/font_file_lister_gdi.cpp)
 else (WIN32)
-    find_package(Fontconfig REQUIRED)
-    target_link_libraries (Aegisub ${Fontconfig_LIBRARIES})
     target_sources(Aegisub PRIVATE src/font_file_lister_fontconfig.cpp)
-    set_property(SOURCE src/font_file_lister_fontconfig.cpp PROPERTY INCLUDE_DIRECTORIES "${Fontconfig_INCLUDE_DIRS}")
 endif (WIN32)
-
-find_package(ass REQUIRED)
-include_directories(${ass_INCLUDE_DIRS})
-target_link_libraries (Aegisub ${ass_LIBRARIES})
-
-find_package(Boost REQUIRED chrono filesystem locale regex system thread)
-include_directories(${Boost_INCLUDE_DIRS})
-target_link_directories(Aegisub PRIVATE ${Boost_LIBRARY_DIRS})
-target_link_libraries(Aegisub ${Boost_LIBRARIES})
 
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 target_link_libraries (Aegisub ${OPENGL_LIBRARIES})
 
-find_package(Hunspell REQUIRED)
-include_directories(${HUNSPELL_INCLUDE_DIR})
-target_link_libraries (Aegisub ${HUNSPELL_LIBRARIES})
 add_definitions("-DWITH_HUNSPELL")
 target_sources(Aegisub PRIVATE src/spellchecker_hunspell.cpp)
 
-find_package(Iconv REQUIRED)
-include_directories(${Iconv_INCLUDE_DIRS})
-target_link_libraries (Aegisub ${Iconv_LIBRARIES})
 add_definitions("-DHAVE_ICONV")
-if (NOT Iconv_IS_BUILT_IN)
-set_property(
-    SOURCE libaegisub/common/charset_conv.cpp
-    PROPERTY COMPILE_DEFINITIONS AGI_ICONV_CONST
-)
-endif (NOT Iconv_IS_BUILT_IN)
-
-find_package(ICU REQUIRED uc dt in)
-include_directories(${ICU_INCLUDE_DIRS})
-target_link_libraries (Aegisub ${ICU_LIBRARIES})
-
-find_package(wxWidgets REQUIRED adv base core gl stc xml)
-include(${wxWidgets_USE_FILE})
-target_link_libraries(Aegisub ${wxWidgets_LIBRARIES})
-
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
-target_link_libraries (Aegisub ${ZLIB_LIBRARIES})
 
 find_package(ALSA)
 if (ALSA_FOUND)
@@ -528,20 +314,9 @@ if(MSVC)
     target_sources(Aegisub PRIVATE src/audio_player_dsound.cpp src/audio_player_dsound2.cpp)
 endif(MSVC)
 
-find_package(FFMS2)
-if (FFMS2_FOUND)
-    include_directories(${FFMS2_INCLUDE_DIRS})
-    target_link_libraries (Aegisub ${FFMS2_LIBRARIES})
-    add_definitions("-DWITH_FFMS2")
-    target_sources(Aegisub PRIVATE src/audio_provider_ffmpegsource.cpp src/ffmpegsource_common.cpp src/video_provider_ffmpegsource.cpp)
-endif(FFMS2_FOUND)
-
-find_package(FFTW)
-if (FFTW_FOUND)
-    include_directories(${FFTW_INCLUDES})
-    target_link_libraries (Aegisub ${FFTW_LIBRARIES})
-    add_definitions("-DWITH_FFTW3")
-endif(FFTW_FOUND)
+add_definitions("-DWITH_FFMS2")
+target_sources(Aegisub PRIVATE src/audio_provider_ffmpegsource.cpp src/ffmpegsource_common.cpp src/video_provider_ffmpegsource.cpp)
+add_definitions("-DWITH_FFTW3")
 
 #ifdef WITH_LIBPULSE
 #add_definitions("-DWITH_LIBPULSE")
@@ -559,26 +334,25 @@ endif(OPENAL_FOUND)
 #ifdef WITH_PORTAUDIO
 #ifdef WITH_STARTUPLOG
 
-find_package(uchardet)
-if (uchardet_FOUND)
-    include_directories(${uchardet_INCLUDE_DIRS})
-    target_link_libraries (Aegisub ${uchardet_LIBRARIES})
-    add_definitions("-DWITH_UCHARDET")
-endif(uchardet_FOUND)
+add_definitions("-DWITH_UCHARDET")
 
 #ifdef WITH_UPDATE_CHECKER
 
+if (WIN32)
+    add_definitions("-D_UNICODE" "-DUNICODE")
+endif (WIN32)
+
 if (NOT WIN32)
-set(AEGISUB_COMMAND "aegisub" CACHE STRING "The executable name of Aegisub")
-set_target_properties(Aegisub PROPERTIES OUTPUT_NAME aegisub)
-configure_file("packages/desktop/aegisub.desktop.template.in" "aegisub.desktop" @ONLY)
-install(FILES "${CMAKE_BINARY_DIR}/aegisub.desktop" DESTINATION "share/applications")
-install(FILES "packages/desktop/16x16.png" DESTINATION "share/icons/hicolor/16x16/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/22x22.png" DESTINATION "share/icons/hicolor/22x22/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/24x24.png" DESTINATION "share/icons/hicolor/24x24/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/32x32.png" DESTINATION "share/icons/hicolor/32x32/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/48x48.png" DESTINATION "share/icons/hicolor/48x48/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/64x64.png" DESTINATION "share/icons/hicolor/64x64/apps" RENAME aegisub.png)
-install(FILES "packages/desktop/scalable.svg" DESTINATION "share/icons/hicolor/scalable/apps" RENAME aegisub.svg)
+    set(AEGISUB_COMMAND "aegisub" CACHE STRING "The executable name of Aegisub")
+    set_target_properties(Aegisub PROPERTIES OUTPUT_NAME aegisub)
+    configure_file("packages/desktop/aegisub.desktop.template.in" "aegisub.desktop" @ONLY)
+    install(FILES "${CMAKE_BINARY_DIR}/aegisub.desktop" DESTINATION "share/applications")
+    install(FILES "packages/desktop/16x16.png" DESTINATION "share/icons/hicolor/16x16/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/22x22.png" DESTINATION "share/icons/hicolor/22x22/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/24x24.png" DESTINATION "share/icons/hicolor/24x24/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/32x32.png" DESTINATION "share/icons/hicolor/32x32/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/48x48.png" DESTINATION "share/icons/hicolor/48x48/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/64x64.png" DESTINATION "share/icons/hicolor/64x64/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/scalable.svg" DESTINATION "share/icons/hicolor/scalable/apps" RENAME aegisub.svg)
 endif (NOT WIN32)
 install (TARGETS Aegisub DESTINATION bin)
