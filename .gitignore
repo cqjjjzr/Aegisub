@@ -88,3 +88,8 @@ vendor/luajit/src/luajit
 
 .nuget
 .vs
+.vscode
+
+src/generated
+out
+temp
