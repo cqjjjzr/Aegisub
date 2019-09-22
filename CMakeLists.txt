@@ -415,7 +415,7 @@ add_definitions("-DWITH_UCHARDET")
 
 if(WIN32)
     set(DEFAULT_PLAYER_AUDIO DirectSound)
-    configure_file("resourses/configs/default_config_win.json" "${PROJECT_SOURCE_DIR}/resourses/configs/default_config_platform.json" COPYONLY)
+    configure_file("${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" COPYONLY)
 else()
     if(WITH_LIBPULSE)
         set(DEFAULT_PLAYER_AUDIO "PulseAudio" CACHE STRING "Default audio player")
@@ -442,10 +442,10 @@ else()
         set(DEFAULT_PLAYER_AUDIO "NONE" CACHE STRING "Default audio player")
     endif()
     add_custom_command(
-        OUTPUT ${PROJECT_SOURCE_DIR}/resourses/configs/default_config_platform.json
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/resourses/configs/default_config_win.json ${PROJECT_SOURCE_DIR}/resourses/configs/default_config_platform.json
+        OUTPUT ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
+        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
     )
-    configure_file("resourses/configs/default_config_platform.json.in" "${PROJECT_SOURCE_DIR}/resourses/configs/default_config_platform.json" @ONLY)
+    configure_file("resources/configs/default_config_platform.json.in" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" @ONLY)
 endif()
 
 if(NOT WIN32)
