@@ -410,11 +410,11 @@ void VideoDisplay::SetZoomFromBoxText(wxCommandEvent &) {
 
 void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {
 	toolBar->ClearTools();
+	tool = std::move(new_tool);
 	toolBar->AddSeparator();
 	toolBar->Realize();
 	toolBar->Show(false);
 
-	tool = std::move(new_tool);
 	tool->SetToolbar(toolBar);
 
 	// Update size as the new typesetting tool may have changed the subtoolbar size
