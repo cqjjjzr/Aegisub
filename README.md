@@ -14,26 +14,36 @@ Prerequisites:
 
 1. CMake 3.14 or later (or you can use an older version by editing the first line in CMakeLists.txt, and download the missing `cmake/FindFontconfig.cmake` from [here](https://gitlab.kitware.com/cmake/cmake/blob/master/Modules/FindFontconfig.cmake)),
 2. Any compiling toolchain supported by CMake,
-3. All required dependencies, namely `libass`, `Boost`(with ICU support), `OpenGL`, `libicu`, `wxWidgets`, `zlib`. Additionally, `libiconv` is required on non-POSIX systems. `fontconfig` is required on non-Windows systems.
-4. Any optional dependencies, namely `ALSA`, `FFMS2`, `FFTW`, `Hunspell`, `OpenAL`, `uchardet`.
 
-Building:
+### Dependency Resolving
+
+If you want to resoive all the dependencies on your own:
+
+1. All required dependencies, namely `libass`, `Boost`(with ICU support), `OpenGL`, `libicu`, `wxWidgets`, `zlib`, `luabins`, `luajit`. Additionally, `libiconv` is required on non-POSIX systems. `fontconfig` is required on non-Windows systems.
+2. Any optional dependencies, namely `ALSA`, `FFMS2`, `FFTW`, `Hunspell`, `OpenAL`, `uchardet`.
+
+If you want to use Conan to automatically get all dependencies:
+
+1. Clone the [CMake script repo using Conan](https://github.com/cqjjjzr/Aegisub-Conan-CMake).
+2. Follow the `README.md` in that repository.
+
+### Building
 
 1. If you decided to build from source:
 ```shell
-git clone https://github.com/wangqr/Aegisub.git  # No --recursive is needed
+git clone https://github.com/cqjjjzr/Aegisub.git  # No --recursive is needed
 cd Aegisub
-./build/version.sh .  # This will generate build/git_version.h
+git checkout dev-cj # use Charlie's branch
 ```
 2. Make an empty directory to hold build outputs:
 ```shell
 mkdir build-dir
 ```
-3. Build the project using CMake. Use either cmake-gui, or the command line:
+3. Build the project using CMake. Use either cmake-gui, or the command line
 ```shell
 cd build-dir
 cmake ..
-make
+cmake --build .
 ```
 
 ## Updating Moonscript
