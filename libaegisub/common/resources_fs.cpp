@@ -75,9 +75,6 @@ boost::optional<std::string> LoadConfig(std::string_view name)
     auto filename = resourcePathPrefix + std::string(name) + configResourceExt;
     if (!agi::fs::FileExists(filename)) return boost::none;
     auto len = agi::fs::Size(filename);
-    auto ptrStream = agi::io::Open(filename, false);
-    auto result = std::string(len, '\0');
-    result.assign((std::istreambuf_iterator<char>(*ptrStream)), std::istreambuf_iterator<char>());
-    return result;
+    return agi::io::ReadFile(filename);
 }
 }

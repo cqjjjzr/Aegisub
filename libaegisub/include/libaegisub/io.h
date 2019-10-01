@@ -30,6 +30,7 @@ DEFINE_EXCEPTION(IOError, Exception);
 DEFINE_EXCEPTION(IOFatal, IOError);
 
 std::unique_ptr<std::istream> Open(fs::path const& file, bool binary = false);
+std::string ReadFile(fs::path const& file);
 
 class Save {
 	std::unique_ptr<std::ostream> fp;

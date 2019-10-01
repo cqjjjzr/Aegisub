@@ -27,6 +27,8 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <sstream>
+
 namespace agi {
 	namespace io {
 
@@ -41,6 +43,17 @@ std::unique_ptr<std::istream> Open(fs::path const& file, bool binary) {
 
 	return std::unique_ptr<std::istream>(stream.release());
 }
+
+std::string ReadFile(fs::path const& file)
+{
+    LOG_D("agi/io/read/file") << file;
+
+    auto stream = Open(file, false);
+    std::ostringstream contents;
+    contents << stream->rdbuf();
+    return contents.str();
+}
+
 
 Save::Save(fs::path const& file, bool binary)
 : file_name(file)
