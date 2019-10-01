@@ -37,18 +37,9 @@ foreach(CONFIG_FILENAME IN LISTS AEGISUB_CONFIGS_OSX)
   string(APPEND AEGISUB_RES_OSX_RESPACK_ENTRIES "${CONFIG_FILENAME}\n")
 endforeach()
 
-string(CONFIGURE [[
-#ifdef RESOURCE_H_
-#define RESOURCE_H_
-
-@AEGISUB_RES_WIN_ENTRIES@
-
-#endif
-]] AEGISUB_RES_WIN)
 file(MAKE_DIRECTORY src/generated/windows)
 file(MAKE_DIRECTORY src/generated/osx)
-file(WRITE src/generated/windows/resource.h ${AEGISUB_RES_WIN})
-file(WRITE src/generated/windows/resource.rc ${AEGISUB_RES_WIN_RC_ENTRIES})
-file(WRITE src/generated/osx/manifest.respack ${AEGISUB_RES_RESPACK_ENTRIES})
-file(WRITE src/generated/osx/manifest_osx.respack ${AEGISUB_RES_OSX_RESPACK_ENTRIES})
+configure_file(resources/resource.rc.in src/generated/windows/resource.rc)
+configure_file(resources/manifest.respack.in src/generated/osx/manifest.respack)
+configure_file(resources/manifest_osx.respack.in src/generated/osx/manifest_osx.respack)
 message(STATUS "Aegisub Build: Resources manifest generated")

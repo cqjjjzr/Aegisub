@@ -1,0 +1,6 @@
+#ifdef RESOURCE_H_
+#define RESOURCE_H_
+
+@AEGISUB_RES_WIN_ENTRIES@
+
+#endif
