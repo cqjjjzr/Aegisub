@@ -3,6 +3,16 @@ file(GLOB_RECURSE AEGISUB_BITMAPS resources/*.png)
 file(GLOB AEGISUB_CONFIGS resources/configs/*.json)
 file(GLOB AEGISUB_CONFIGS_OSX resources/configs/osx/*.json)
 
+if(WIN32)
+    configure_file("${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" COPYONLY)
+else()
+    add_custom_command(
+        OUTPUT ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
+        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
+    )
+    configure_file("resources/configs/default_config_platform.json.in" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" @ONLY)
+endif()
+
 set(AEGISUB_RES_WIN_ENTRIES "")
 set(AEGISUB_RES_WIN_RC_ENTRIES "")
 set(AEGISUB_RES_RESPACK_ENTRIES "")

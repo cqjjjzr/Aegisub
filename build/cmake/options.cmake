@@ -1,0 +1,55 @@
+# Dependencies configurator
+set(DEPENDENCIES_CMAKE_FILE "build/cmake/dependencies.cmake" CACHE STRING "CMake file that configures dependencies. The default one uses find_package.")
+
+# Subtitle dependencies
+set(WITH_CSRI ON CACHE BOOL "Enable CSRI support")
+
+# Video dependencies
+set(WITH_FFMS2 ON CACHE BOOL "Enable FFMS2 support")
+set(WITH_AVISYNTH ON CACHE BOOL "Enable AviSynth support")
+
+# Audio dependencies
+set(WITH_LIBPULSE ON CACHE BOOL "Enable PulseAudio support")
+set(WITH_OPENAL ON CACHE BOOL "Enable OpenAL support")
+set(WITH_OSS OFF CACHE BOOL "Enable OSS support")
+set(WITH_PORTAUDIO ON CACHE BOOL "Enable PortAudio support")
+set(WITH_ALSA ON CACHE BOOL "Enable ALSA support")
+if(WIN32)
+    set(WITH_DIRECTSOUND ON)
+else()
+    set(WITH_DIRECTSOUND OFF)
+endif()
+
+# Misc dependencies
+set(WITH_HUNSPELL ON CACHE BOOL "Enable Hunspell support")
+set(WITH_UCHARDET ON CACHE BOOL "Enable uchardet support")
+set(WITH_FFTW3 ON CACHE BOOL "Enable fftw support")
+if(WIN32)
+    set(WITH_FONTCONFIG OFF)
+else()
+    set(WITH_FONTCONFIG ON)
+endif()
+
+# Misc options
+
+set(WITH_STARTUPLOG OFF CACHE BOOL "Enable startup log")
+if(WITH_STARTUPLOG)
+    target_compile_definitions(Aegisub PRIVATE "WITH_STARTUPLOG")
+endif()
+
+set(WITH_UPDATE_CHECKER OFF)
+if(WITH_UPDATE_CHECKER)
+    set(UPDATE_CHECKER_SERVER "\"updates.aegisub.org\"" CACHE STRING "Server for the update checker")
+    set(UPDATE_CHECKER_BASE_URL "\"/trunk\"" CACHE STRING "Base path for the update checker")
+    target_compile_definitions(Aegisub PRIVATE "WITH_UPDATE_CHECKER" "UPDATE_CHECKER_SERVER=${UPDATE_CHECKER_SERVER}" "UPDATE_CHECKER_BASE_URL=${UPDATE_CHECKER_BASE_URL}")
+    target_link_libraries(Aegisub ${Boost_asio_LIBRARY})
+    target_sources(Aegisub PRIVATE src/dialog_version_check.cpp)
+endif()
+
+set(WITH_BUILD_CREDIT OFF CACHE BOOL "Whether show build credit in about dialog")
+if(WITH_BUILD_CREDIT)
+    set(BUILD_CREDIT "" CACHE STRING "Build credit shown in about dialog")
+    target_compile_definitions(Aegisub PRIVATE "BUILD_CREDIT=${BUILD_CREDIT}")
+else()
+    unset(BUILD_CREDIT CACHE)
+endif()

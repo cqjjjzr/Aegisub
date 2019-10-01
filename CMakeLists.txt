@@ -4,92 +4,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(Aegisub)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(build/cmake/resources.cmake)
 
-include(cmake/dependencies.cmake)
-include(cmake/resources.cmake)
-
+include(libaegisub/libaegisub.cmake) # Not using add_subdirectory to configure dependencies
 include_directories("libaegisub/include")
-
-add_subdirectory(dependencies/csri)
-include_directories(dependencies/csri/include)
-
-add_library(libaegisub STATIC
-    libaegisub/common/parser.cpp
-    libaegisub/ass/dialogue_parser.cpp
-    libaegisub/ass/time.cpp
-    libaegisub/ass/uuencode.cpp
-    libaegisub/audio/provider.cpp
-    libaegisub/audio/provider_convert.cpp
-    libaegisub/audio/provider_dummy.cpp
-    libaegisub/audio/provider_hd.cpp
-    libaegisub/audio/provider_lock.cpp
-    libaegisub/audio/provider_pcm.cpp
-    libaegisub/audio/provider_ram.cpp
-    libaegisub/common/cajun/elements.cpp
-    libaegisub/common/cajun/reader.cpp
-    libaegisub/common/cajun/writer.cpp
-    libaegisub/lua/modules/lfs.cpp
-    libaegisub/lua/modules/re.cpp
-    libaegisub/lua/modules/unicode.cpp
-    libaegisub/lua/modules/lpeg.c
-    libaegisub/lua/modules.cpp
-    libaegisub/lua/script_reader.cpp
-    libaegisub/lua/utils.cpp
-    libaegisub/common/calltip_provider.cpp
-    libaegisub/common/character_count.cpp
-    libaegisub/common/charset.cpp
-    libaegisub/common/charset_6937.cpp
-    libaegisub/common/charset_conv.cpp
-    libaegisub/common/color.cpp
-    libaegisub/common/file_mapping.cpp
-    libaegisub/common/format.cpp
-    libaegisub/common/fs.cpp
-    libaegisub/common/hotkey.cpp
-    libaegisub/common/io.cpp
-    libaegisub/common/json.cpp
-    libaegisub/common/kana_table.cpp
-    libaegisub/common/karaoke_matcher.cpp
-    libaegisub/common/keyframe.cpp
-    libaegisub/common/line_iterator.cpp
-    libaegisub/common/log.cpp
-    libaegisub/common/mru.cpp
-    libaegisub/common/option.cpp
-    libaegisub/common/option_value.cpp
-    libaegisub/common/path.cpp
-    libaegisub/common/thesaurus.cpp
-    libaegisub/common/util.cpp
-    libaegisub/common/vfr.cpp
-    libaegisub/common/ycbcr_conv.cpp
-    libaegisub/common/dispatch.cpp
-)
-if(UNIX)
-    target_sources(libaegisub PRIVATE
-        libaegisub/unix/access.cpp
-        libaegisub/unix/fs.cpp
-        libaegisub/unix/log.cpp
-        libaegisub/unix/path.cpp
-        libaegisub/unix/util.cpp
-    )
-    set_property(
-        SOURCE libaegisub/unix/path.cpp
-        PROPERTY COMPILE_DEFINITIONS
-            P_DATA="${CMAKE_INSTALL_PREFIX}/share/aegisub/"
-    )
-elseif(WIN32)
-    target_sources(libaegisub PRIVATE
-        libaegisub/windows/access.cpp
-        libaegisub/windows/charset_conv_win.cpp
-        libaegisub/windows/fs.cpp
-        libaegisub/windows/lagi_pre.cpp
-        libaegisub/windows/log_win.cpp
-        libaegisub/windows/path_win.cpp
-        libaegisub/windows/util_win.cpp
-        libaegisub/windows/resources_win.cpp
-    )
-endif()
-set_target_properties(libaegisub PROPERTIES PREFIX "")
-target_compile_definitions(libaegisub PRIVATE CMAKE_BUILD)
 
 add_executable(Aegisub WIN32
     src/command/app.cpp
@@ -253,199 +171,32 @@ add_executable(Aegisub WIN32
     src/video_slider.cpp
     src/visual_feature.cpp
 )
+
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub csri)
-conan_target_link_libraries(Aegisub)
 target_compile_definitions(Aegisub PRIVATE CMAKE_BUILD)
 
-set(WITH_BUILD_CREDIT OFF CACHE BOOL "Whether show build credit in about dialog")
-if(WITH_BUILD_CREDIT)
-    set(BUILD_CREDIT "" CACHE STRING "Build credit shown in about dialog")
-    target_compile_definitions(Aegisub PRIVATE "BUILD_CREDIT=${BUILD_CREDIT}")
-else()
-    unset(BUILD_CREDIT CACHE)
-endif()
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/build/cmake/modules)
+include(build/cmake/options.cmake)
+include(build/cmake/dependencies_builtin.cmake)
+include(${DEPENDENCIES_CMAKE_FILE}) # default: build/cmake/dependencies.cmake
+include(build/cmake/dependencies_sources.cmake)
 
 if (MSVC)
-    target_compile_options(libaegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h")
-else(MSVC)
-    target_compile_options(libaegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/libaegisub/lagi_pre.h")
-endif()
-
-if (MSVC)
-    add_definitions("-DNOMINMAX -DINITGUID")
+	target_compile_definitions(libaegisub PRIVATE NOMINMAX INITGUID)
+	target_compile_definitions(Aegisub PRIVATE NOMINMAX INITGUID)
     target_compile_options(Aegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/src/agi_pre.h" "-MP")
     target_link_libraries (Aegisub Usp10)
     #target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/crash_writer_minidump.cpp)
-    target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/generated/windows/resource.rc src/crash_writer.cpp src/dpi_aware.manifest)
+    target_sources(Aegisub PRIVATE
+		src/res/res.rc
+		src/res/strings.rc
+		src/generated/windows/resource.rc
+		src/crash_writer.cpp
+		src/dpi_aware.manifest)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Aegisub)
 else()
     target_sources(Aegisub PRIVATE src/crash_writer.cpp)
     target_compile_options(Aegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/src/agi_pre.h")
-endif()
-
-if(WIN32)
-    target_sources(Aegisub PRIVATE src/font_file_lister_gdi.cpp)
-else (WIN32)
-    target_sources(Aegisub PRIVATE src/font_file_lister_fontconfig.cpp)
-endif()
-
-find_package(OpenGL REQUIRED)
-target_include_directories(Aegisub PRIVATE ${OPENGL_INCLUDE_DIR})
-target_link_libraries(Aegisub ${OPENGL_LIBRARIES})
-
-add_definitions("-DWITH_HUNSPELL")
-target_sources(Aegisub PRIVATE src/spellchecker_hunspell.cpp)
-
-add_definitions("-DHAVE_ICONV")
-
-set(WITH_ALSA ON CACHE BOOL "Enable ALSA support")
-if(WITH_ALSA)
-    find_package(ALSA)
-    if(NOT ALSA_FOUND)
-        set(WITH_ALSA OFF CACHE BOOL "Enable ALSA support" FORCE)
-    endif()
-endif()
-if(WITH_ALSA)
-    target_compile_definitions(Aegisub PRIVATE "WITH_ALSA")
-    target_include_directories(Aegisub PRIVATE ${ALSA_INCLUDE_DIRS})
-    target_link_libraries(Aegisub ${ALSA_LIBRARIES})
-    target_sources(Aegisub PRIVATE src/audio_player_alsa.cpp)
-endif()
-
-set(WITH_AVISYNTH ON CACHE BOOL "Enable AviSynth support")
-if(WITH_AVISYNTH)
-    find_package(AviSynth)
-    if(NOT AviSynth_FOUND)
-        set(WITH_AVISYNTH OFF CACHE BOOL "Enable AviSynth support" FORCE)
-    endif()
-endif()
-if(WITH_AVISYNTH)
-    target_compile_definitions(Aegisub PRIVATE "WITH_AVISYNTH" "AVS_LINKAGE_DLLIMPORT")
-    target_include_directories(Aegisub PRIVATE ${AviSynth_INCLUDE_DIRS})
-    target_link_libraries(Aegisub Vfw32 ${AviSynth_LIBRARIES})
-    target_sources(Aegisub PRIVATE src/audio_provider_avs.cpp src/avisynth_wrap.cpp src/video_provider_avs.cpp)
-endif()
-
-target_compile_definitions(Aegisub PRIVATE "WITH_CSRI")
-target_sources(Aegisub PRIVATE src/subtitles_provider_csri.cpp)
-set_property(SOURCE src/subtitles_provider_csri.cpp PROPERTY INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/vendor/csri/include")
-
-if(WIN32)
-    target_compile_definitions(Aegisub PRIVATE "WITH_DIRECTSOUND")
-    target_link_libraries(Aegisub dsound)
-    target_sources(Aegisub PRIVATE src/audio_player_dsound.cpp src/audio_player_dsound2.cpp)
-    set(WITH_DIRECTSOUND ON)
-else()
-    set(WITH_DIRECTSOUND OFF)
-endif()
-
-add_definitions("-DWITH_FFMS2")
-target_sources(Aegisub PRIVATE src/audio_provider_ffmpegsource.cpp src/ffmpegsource_common.cpp src/video_provider_ffmpegsource.cpp)
-add_definitions("-DWITH_FFTW3")
-
-set(WITH_LIBPULSE ON CACHE BOOL "Enable PulseAudio support")
-if(WITH_LIBPULSE)
-    find_package(PulseAudio)
-    if(NOT PULSEAUDIO_FOUND)
-        set(WITH_LIBPULSE OFF CACHE BOOL "Enable PulseAudio support" FORCE)
-    endif()
-endif()
-if(WITH_LIBPULSE)
-    target_compile_definitions(Aegisub PRIVATE "WITH_LIBPULSE")
-    target_include_directories(Aegisub PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
-    target_link_libraries(Aegisub ${PULSEAUDIO_LIBRARY})
-    target_sources(Aegisub PRIVATE src/audio_player_pulse.cpp)
-endif()
-
-set(WITH_OPENAL ON CACHE BOOL "Enable OpenAL support")
-if(WITH_OPENAL)
-    find_package(OpenAL)
-    if(NOT OPENAL_FOUND)
-        set(WITH_OPENAL OFF CACHE BOOL "Enable OpenAL support" FORCE)
-    endif()
-endif()
-if(WITH_OPENAL)
-    target_compile_definitions(Aegisub PRIVATE "WITH_OPENAL")
-    target_include_directories(Aegisub PRIVATE ${OPENAL_INCLUDE_DIR})
-    target_link_libraries(Aegisub ${OPENAL_LIBRARY})
-    target_sources(Aegisub PRIVATE src/audio_player_openal.cpp)
-endif()
-
-set(WITH_OSS OFF CACHE BOOL "Enable OSS support")
-if(WITH_OSS)
-    find_package(OSS)
-    if(NOT OSS_FOUND)
-        set(WITH_OSS OFF CACHE BOOL "Enable OSS support" FORCE)
-    endif()
-endif()
-if(WITH_OSS)
-    target_compile_definitions(Aegisub PRIVATE "WITH_OSS")
-    target_include_directories(Aegisub PRIVATE ${OSS_INCLUDE_DIRS})
-    target_sources(Aegisub PRIVATE src/audio_player_oss.cpp)
-endif()
-
-set(WITH_PORTAUDIO ON CACHE BOOL "Enable PortAudio support")
-if(WITH_PORTAUDIO)
-    find_package(PortAudio)
-    if(NOT PortAudio_FOUND)
-        set(WITH_PORTAUDIO OFF CACHE BOOL "Enable PortAudio support" FORCE)
-    endif()
-endif()
-if(WITH_PORTAUDIO)
-    target_compile_definitions(Aegisub PRIVATE "WITH_PORTAUDIO")
-    target_include_directories(Aegisub PRIVATE ${PortAudio_INCLUDE_DIRS})
-    target_link_libraries(Aegisub ${PortAudio_LIBRARIES})
-    target_sources(Aegisub PRIVATE src/audio_player_portaudio.cpp)
-endif()
-
-set(WITH_STARTUPLOG OFF CACHE BOOL "Enable startup log")
-if(WITH_STARTUPLOG)
-    target_compile_definitions(Aegisub PRIVATE "WITH_STARTUPLOG")
-endif()
-
-set(WITH_UPDATE_CHECKER OFF)
-if(WITH_UPDATE_CHECKER)
-    set(UPDATE_CHECKER_SERVER "\"updates.aegisub.org\"" CACHE STRING "Server for the update checker")
-    set(UPDATE_CHECKER_BASE_URL "\"/trunk\"" CACHE STRING "Base path for the update checker")
-    target_compile_definitions(Aegisub PRIVATE "WITH_UPDATE_CHECKER" "UPDATE_CHECKER_SERVER=${UPDATE_CHECKER_SERVER}" "UPDATE_CHECKER_BASE_URL=${UPDATE_CHECKER_BASE_URL}")
-    target_link_libraries(Aegisub ${Boost_asio_LIBRARY})
-    target_sources(Aegisub PRIVATE src/dialog_version_check.cpp)
-endif()
-add_definitions("-DWITH_UCHARDET")
-
-if(WIN32)
-    set(DEFAULT_PLAYER_AUDIO DirectSound)
-    configure_file("${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" COPYONLY)
-else()
-    if(WITH_LIBPULSE)
-        set(DEFAULT_PLAYER_AUDIO "PulseAudio" CACHE STRING "Default audio player")
-    elseif(WITH_ALSA)
-        set(DEFAULT_PLAYER_AUDIO "ALSA" CACHE STRING "Default audio player")
-    elseif(WITH_OPENAL)
-        set(DEFAULT_PLAYER_AUDIO "OpenAL" CACHE STRING "Default audio player")
-    elseif(WITH_PORTAUDIO)
-        set(DEFAULT_PLAYER_AUDIO "PortAudio" CACHE STRING "Default audio player")
-    elseif(WITH_OSS)
-        set(DEFAULT_PLAYER_AUDIO "OSS" CACHE STRING "Default audio player")
-    else()
-        message(SEND_ERROR
-            "No supported audio player interface was enabled.\n"
-            "If you want audio support in Aegisub you need to install one of these libraries:\n"
-            " - PulseAudio\n"
-            "   * http://pulseaudio.org/\n"
-            " - ALSA (Linux only)\n"
-            "   * http://www.alsa-project.org/\n"
-            " - PortAudio (version 19 only)\n"
-            "   * http://www.portaudio.com/\n"
-            "\n"
-        )
-        set(DEFAULT_PLAYER_AUDIO "NONE" CACHE STRING "Default audio player")
-    endif()
-    add_custom_command(
-        OUTPUT ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json ${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json
-    )
-    configure_file("resources/configs/default_config_platform.json.in" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" @ONLY)
 endif()
 
 if(NOT WIN32)
@@ -493,7 +244,7 @@ message(STATUS "\n"
     "  FFTW3:                 ${WITH_FFTW3}\n"
     "  Hunspell:              ${WITH_HUNSPELL}\n"
     "  uchardet:              ${WITH_UCHARDET}\n"
-    "  LuaJIT:                bundled\n"
+    "  LuaJIT:                ON\n"
     "\n"
     "Options\n"
     "  Startup log:           ${WITH_STARTUPLOG}\n"
@@ -504,3 +255,5 @@ message(STATUS "\n"
 if (WIN32)
     add_definitions("-D_UNICODE" "-DUNICODE")
 endif (WIN32)
+
+include(build/cmake/source_groups.cmake)
