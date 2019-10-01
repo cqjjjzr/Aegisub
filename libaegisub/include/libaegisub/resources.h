@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Amar Takhar <verm@aegisub.org>
+// Copyright (c) 2019, Charlie Jiang <cqjjjzr@126.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,18 +21,41 @@
 #include <string>
 #include <string_view>
 
-class wxBitmap;
-class wxIcon;
+#include <boost/optional/optional.hpp>
+#include <wx/bitmap.h>
+#include <wx/icon.h>
+
+#include "libaegisub/resources_fs.h"
 
 namespace agi::resources
 {
+wxBitmap LoadImageResInternal(std::string_view name, int dir = 0);
+wxIcon LoadIconResInternal(std::string_view name);
+std::string LoadConfigInternal(std::string_view name);
+
+
 /// Load image resource using name.
 /// @param dir The image direction
-wxBitmap LoadImageRes(std::string_view name, int dir = 0);
+inline wxBitmap LoadImageRes(std::string_view name, int dir = 0)
+{
+    if (boost::optional<wxBitmap> fsResource = agi::resources::fs::LoadImageRes(name, dir))
+        return *fsResource;
+    return LoadImageResInternal(name, dir);
+}
 /// Load icon resource using name.
-wxIcon LoadIconRes(std::string_view name);
+inline wxIcon LoadIconRes(std::string_view name)
+{
+    if (boost::optional<wxIcon> fsResource = agi::resources::fs::LoadIconRes(name))
+        return *fsResource;
+    return LoadIconResInternal(name);
+}
 /// Load config string resource using name.
-std::string LoadConfig(std::string_view name);
+inline std::string LoadConfig(std::string_view name)
+{
+    if (boost::optional<std::string> fsResource = agi::resources::fs::LoadConfig(name))
+        return *fsResource;
+    return LoadConfigInternal(name);
+}
 }
 
 #define GETIMAGE(name) agi::resources::LoadImageRes( #name )

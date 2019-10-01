@@ -41,7 +41,7 @@ std::unique_ptr<char> LoadBinary(const std::string& name, OUT size_t& outLength)
 	HGLOBAL res = LoadResource(NULL, resSrc);
 	if (res == NULL)
 		throw BadResourceException("Failed to load resource " + name + ":" + util::ErrorString(GetLastError()));
-	
+
 	DWORD size = SizeofResource(NULL, resSrc);
 	if (size <= 0)
 		throw BadResourceException("Failed to load resource " + name + ", the reported size was 0. " + util::ErrorString(GetLastError()));
@@ -55,7 +55,7 @@ std::unique_ptr<char> LoadBinary(const std::string& name, OUT size_t& outLength)
 	return buf;
 }
 
-wxBitmap LoadImageRes(std::string_view name, int dir)
+wxBitmap LoadImageResInternal(std::string_view name, int dir)
 {
 	size_t len;
 	auto buf = LoadBinary("bitmap_" + std::string(name), len);
@@ -66,7 +66,7 @@ wxBitmap LoadImageRes(std::string_view name, int dir)
 	return wxBitmap(wxImage(mem).Mirror());
 }
 
-wxIcon LoadIconRes(std::string_view name)
+wxIcon LoadIconResInternal(std::string_view name)
 {
 	size_t len;
 	auto buf = LoadBinary("bitmap_" + std::string(name), len);
@@ -76,8 +76,8 @@ wxIcon LoadIconRes(std::string_view name)
 	icon.CopyFromBitmap(wxBitmap(wxImage(mem)));
 	return icon;
 }
-	
-std::string LoadConfig(std::string_view name)
+
+std::string LoadConfigInternal(std::string_view name)
 {
 	size_t len;
 	auto buf = LoadBinary("config_" + std::string(name), len);

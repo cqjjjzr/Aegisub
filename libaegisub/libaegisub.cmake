@@ -46,6 +46,7 @@ add_library(libaegisub STATIC
     libaegisub/common/vfr.cpp
     libaegisub/common/ycbcr_conv.cpp
     libaegisub/common/dispatch.cpp
+    libaegisub/common/resources_fs.cpp
 )
 
 if(UNIX)
