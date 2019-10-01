@@ -4,7 +4,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(Aegisub)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/build/cmake/modules)
+
 include(build/cmake/resources.cmake)
+include(build/cmake/git_version.cmake)
 
 include(libaegisub/libaegisub.cmake) # Not using add_subdirectory to configure dependencies
 include_directories("libaegisub/include")
@@ -175,7 +178,6 @@ add_executable(Aegisub WIN32
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub csri)
 target_compile_definitions(Aegisub PRIVATE CMAKE_BUILD)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/build/cmake/modules)
 include(build/cmake/options.cmake)
 include(build/cmake/dependencies_builtin.cmake)
 include(${DEPENDENCIES_CMAKE_FILE}) # default: build/cmake/dependencies.cmake

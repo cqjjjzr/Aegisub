@@ -33,7 +33,7 @@
 ///
 
 #include "version.h"
-#include "git_version.h"
+#include "generated/git_version.h"
 
 #ifdef _DEBUG
 	#define DEBUG_SUFFIX " [DEBUG VERSION]"

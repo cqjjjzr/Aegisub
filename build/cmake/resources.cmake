@@ -1,7 +1,7 @@
 message(STATUS "Aegisub Build: Collecting resources...")
-file(GLOB_RECURSE AEGISUB_BITMAPS resources/*.png)
-file(GLOB AEGISUB_CONFIGS resources/configs/*.json)
-file(GLOB AEGISUB_CONFIGS_OSX resources/configs/osx/*.json)
+file(GLOB_RECURSE CONFIGURE_DEPENDS AEGISUB_BITMAPS resources/*.png)
+file(GLOB AEGISUB_CONFIGS CONFIGURE_DEPENDS resources/configs/*.json)
+file(GLOB AEGISUB_CONFIGS_OSX CONFIGURE_DEPENDS resources/configs/osx/*.json)
 
 if(WIN32)
     configure_file("${PROJECT_SOURCE_DIR}/resources/configs/default_config_win.json" "${PROJECT_SOURCE_DIR}/resources/configs/default_config_platform.json" COPYONLY)

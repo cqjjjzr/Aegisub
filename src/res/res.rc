@@ -23,8 +23,9 @@ eyedropper_cursor CURSOR "../../resources/bitmaps/windows/eyedropper.cur"
 #define wxUSE_NO_MANIFEST 1
 #include "wx/msw/wx.rc"
 
-#include "../../src/git_version.h"
+#include "../../src/generated/git_version.h"
 #include <Winver.h>
+#include <winres.h>
 
 #ifdef _DEBUG
     #ifdef _WIN64
@@ -52,7 +53,7 @@ eyedropper_cursor CURSOR "../../resources/bitmaps/windows/eyedropper.cur"
     #define AGI_RC_FLAG_PRERELEASE VS_FF_PRERELEASE
 #endif
 
-VS_VERSION_INFO VERSIONINFO
+VS_VERSIONINFO VERSIONINFO
 FILEVERSION    	RESOURCE_BASE_VERSION, BUILD_GIT_VERSION_NUMBER
 PRODUCTVERSION 	RESOURCE_BASE_VERSION, 0
 FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
@@ -63,7 +64,7 @@ FILESUBTYPE    	VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904B0" // 0x0409: en-US, 0x04B0: unicode
+        BLOCK "040904E4" // 0x0409: en-US, 0x04E4: multilingual
         BEGIN
             VALUE "CompanyName",      "Aegisub"
             VALUE "FileDescription",  "Aegisub subtitle editor"
@@ -73,5 +74,10 @@ BEGIN
             VALUE "ProductName",      "Aegisub"
             VALUE "ProductVersion",   BUILD_GIT_VERSION_STRING
         END
+    END
+
+    BLOCK "VarFileInfo"
+        BEGIN
+        VALUE "Translation", 0x0409, 1252
     END
 END
