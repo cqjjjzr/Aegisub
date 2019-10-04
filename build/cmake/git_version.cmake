@@ -53,4 +53,6 @@ else()
     set(GIT_VERSION_PATCH 0)
 endif()
 
-configure_file(build/cmake/git_version.h.in src/generated/git_version.h)
+if(NOT NO_GENERATE_GIT_VERSION_H)
+    configure_file(build/cmake/git_version.h.in src/generated/git_version.h)
+endif()

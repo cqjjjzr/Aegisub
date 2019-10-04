@@ -201,24 +201,20 @@ else()
     target_compile_options(Aegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/src/agi_pre.h")
 endif()
 
-if(NOT WIN32)
-    set(AEGISUB_COMMAND "aegisub" CACHE STRING "The executable name of Aegisub")
-    set_target_properties(Aegisub PROPERTIES OUTPUT_NAME "${AEGISUB_COMMAND}")
-    configure_file("packages/desktop/aegisub.desktop.template.in" "aegisub.desktop" @ONLY)
-    install(FILES "${CMAKE_BINARY_DIR}/aegisub.desktop" DESTINATION "share/applications")
-    install(FILES "packages/desktop/16x16.png" DESTINATION "share/icons/hicolor/16x16/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/22x22.png" DESTINATION "share/icons/hicolor/22x22/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/24x24.png" DESTINATION "share/icons/hicolor/24x24/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/32x32.png" DESTINATION "share/icons/hicolor/32x32/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/48x48.png" DESTINATION "share/icons/hicolor/48x48/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/64x64.png" DESTINATION "share/icons/hicolor/64x64/apps" RENAME aegisub.png)
-    install(FILES "packages/desktop/scalable.svg" DESTINATION "share/icons/hicolor/scalable/apps" RENAME aegisub.svg)
+if(WIN32)
+    add_compile_definitions("_UNICODE" "UNICODE")
 endif()
-install(TARGETS Aegisub DESTINATION bin)
+
+include(build/cmake/install.cmake)
 
 set(WITH_TEST OFF CACHE BOOL "Enable unit tests")
 if(WITH_TEST)
     include("CMakeLists.test.txt")
+endif()
+
+set(WITH_TRANSLATION OFF CACHE BOOL "Build gettext translations. Require gettext tools.")
+if(WITH_TRANSLATION)
+    include(build/cmake/translations_build.cmake)
 endif()
 
 message(STATUS "\n"
@@ -254,8 +250,5 @@ message(STATUS "\n"
     "  Tests:                 ${WITH_TEST}\n"
     "\n"
 )
-if (WIN32)
-    add_definitions("-D_UNICODE" "-DUNICODE")
-endif (WIN32)
 
 include(build/cmake/source_groups.cmake)
