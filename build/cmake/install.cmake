@@ -1,0 +1,22 @@
+if(NOT WIN32)
+    set(AEGISUB_COMMAND "aegisub" CACHE STRING "The executable name of Aegisub")
+    set_target_properties(Aegisub PROPERTIES OUTPUT_NAME "${AEGISUB_COMMAND}")
+    configure_file("packages/desktop/aegisub.desktop.template.in" "aegisub.desktop" @ONLY)
+    install(FILES "${CMAKE_BINARY_DIR}/aegisub.desktop" DESTINATION "share/applications")
+    install(FILES "packages/desktop/16x16.png" DESTINATION "share/icons/hicolor/16x16/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/22x22.png" DESTINATION "share/icons/hicolor/22x22/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/24x24.png" DESTINATION "share/icons/hicolor/24x24/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/32x32.png" DESTINATION "share/icons/hicolor/32x32/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/48x48.png" DESTINATION "share/icons/hicolor/48x48/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/64x64.png" DESTINATION "share/icons/hicolor/64x64/apps" RENAME aegisub.png)
+    install(FILES "packages/desktop/scalable.svg" DESTINATION "share/icons/hicolor/scalable/apps" RENAME aegisub.svg)
+
+    set(INSTALL_BIN_PATH "bin")
+else()
+    set(INSTALL_BIN_PATH ".")
+endif()
+
+install(TARGETS Aegisub DESTINATION ${INSTALL_BIN_PATH})
+
+file(GLOB DEPENDENCY_SHARED_LIBS "${CMAKE_CURRENT_BINARY_DIR}/*.dll" "${CMAKE_CURRENT_BINARY_DIR}/*.so" "${CMAKE_CURRENT_BINARY_DIR}/*.dylib")
+install(FILES ${DEPENDENCY_SHARED_LIBS} DESTINATION ${INSTALL_BIN_PATH})
