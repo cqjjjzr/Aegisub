@@ -56,6 +56,7 @@ if(UNIX)
         libaegisub/unix/log.cpp
         libaegisub/unix/path.cpp
         libaegisub/unix/util.cpp
+        libaegisub/unix/resources.cpp
     )
     set_property(
         SOURCE libaegisub/unix/path.cpp
