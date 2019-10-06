@@ -1,6 +1,9 @@
 sudo: required
 dist: bionic
-language: cpp
+language: python # To use conan
+python: "3.7"
+compiler:
+  - gcc
 
 cache:
   directories:
@@ -20,8 +23,6 @@ addons:
     - cmake
     - build-essential
     - autopoint
-    - python3
-    - pip3
 
 matrix:
   include:
@@ -33,8 +34,8 @@ install:
 - sudo luarocks install uuid > /dev/null
 # Remove the CMake provided by travis
 - sudo rm -rf /usr/local/cmake*
-- cd ~
-- pip3 install conan
+- pip install conan
+- conan user
 - git clone https://github.com/cqjjjzr/Aegisub-Conan-CMake.git
 
 script:
@@ -43,10 +44,10 @@ script:
   cd ..;
   mkdir build-dir;
   cd build-dir;
-  cmake -DCMAKE_CXX_FLAGS='-Wall -Wextra -Wno-unused-parameter -pedantic' -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=ON -DWITH_CSRI=OFF -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="~/Aegisub-Conan-CMake/dependencies_conan.cmake" ..;
+  cmake -DCMAKE_CXX_FLAGS='-Wall -Wextra -Wno-unused-parameter -pedantic' -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=ON -DWITH_CSRI=OFF -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="./Aegisub-Conan-CMake/dependencies_conan.cmake" ..;
   make -j2;
   make test-aegisub -j2;
-  ctest --output-on-failure || travis_terminate 1;
+  ctest --output-on-failure . || travis_terminate 1;
 
 notifications:
   email:
