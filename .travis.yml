@@ -2,6 +2,10 @@ sudo: required
 dist: bionic
 language: cpp
 
+cache:
+  directories:
+  - .conan
+
 git:
   submodules: false
 
@@ -16,7 +20,7 @@ addons:
     - cmake
     - build-essential
     - autopoint
-    - conan
+    - python3
 
 matrix:
   include:
@@ -29,6 +33,7 @@ install:
 # Remove the CMake provided by travis
 - sudo rm -rf /usr/local/cmake*
 - cd ~
+- pip3 install conan
 - git clone https://github.com/cqjjjzr/Aegisub-Conan-CMake.git
 
 script:
