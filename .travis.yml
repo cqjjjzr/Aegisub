@@ -21,6 +21,7 @@ addons:
     - build-essential
     - autopoint
     - python3
+    - pip3
 
 matrix:
   include:
