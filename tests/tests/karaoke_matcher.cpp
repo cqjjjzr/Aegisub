@@ -87,13 +87,13 @@ TEST(lagi_karaoke_matcher, whitespace_in_dest_is_consumed) {
 
 TEST(lagi_karaoke_matcher, dest_match_is_in_characters) {
 	EXPECT_EQ((karaoke_match_result{1, 2}),
-	          auto_match_karaoke({"∫∫", "de"}, "∫∫a"));
+	          auto_match_karaoke({"∫∫", "de"}, "∫∫aba"));
 }
 
 TEST(lagi_karaoke_matcher, decomposed_characters_are_handled_atomically) {
 	// YODO
 	EXPECT_EQ((karaoke_match_result{1, 2}),
-	          auto_match_karaoke({"∫∫", "de"}, "∫∫a"));
+	          auto_match_karaoke({"∫∫", "de"}, "∫∫aba"));
 }
 
 TEST(lagi_karaoke_matcher, single_hiragana_is_matched) {

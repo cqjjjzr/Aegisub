@@ -92,6 +92,5 @@ vendor/luajit/src/luajit
 src/generated
 out
 temp
-tests
 CMakeSettings.json
 /t2

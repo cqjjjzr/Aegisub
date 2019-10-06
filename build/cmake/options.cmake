@@ -1,5 +1,6 @@
 # Dependencies configurator
 set(DEPENDENCIES_CMAKE_FILE "build/cmake/dependencies.cmake" CACHE STRING "CMake file that configures dependencies. The default one uses find_package.")
+set(DEPENDENCIES_CMAKE_FILE_TEST "build/cmake/dependencies_tests.cmake" CACHE STRING "CMake file that configures dependencies in tests. The default one uses find_package. NOTICE: This should be set in DEPENDENCIES_CMAKE_FILE.")
 
 # Subtitle dependencies
 set(WITH_CSRI ON CACHE BOOL "Enable CSRI support")
@@ -52,4 +53,12 @@ if(WITH_BUILD_CREDIT)
     target_compile_definitions(Aegisub PRIVATE "BUILD_CREDIT=${BUILD_CREDIT}")
 else()
     unset(BUILD_CREDIT CACHE)
+endif()
+
+set(WITH_TEST OFF CACHE BOOL "Enable unit tests")
+# We couldn't include tests.cmake here.
+
+set(WITH_TRANSLATION OFF CACHE BOOL "Build gettext translations. Require gettext tools.")
+if(WITH_TRANSLATION)
+    include(build/cmake/translations_build.cmake)
 endif()

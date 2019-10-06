@@ -184,6 +184,8 @@ include(${DEPENDENCIES_CMAKE_FILE}) # default: build/cmake/dependencies.cmake
 include(build/cmake/dependencies_sources.cmake)
 
 if (MSVC)
+    add_compile_options("/utf-8")
+
 	target_compile_definitions(libaegisub PRIVATE NOMINMAX INITGUID)
 	target_compile_definitions(Aegisub PRIVATE NOMINMAX INITGUID)
     target_compile_options(Aegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/src/agi_pre.h" "-MP")
@@ -207,14 +209,8 @@ endif()
 
 include(build/cmake/install.cmake)
 
-set(WITH_TEST OFF CACHE BOOL "Enable unit tests")
 if(WITH_TEST)
-    include("CMakeLists.test.txt")
-endif()
-
-set(WITH_TRANSLATION OFF CACHE BOOL "Build gettext translations. Require gettext tools.")
-if(WITH_TRANSLATION)
-    include(build/cmake/translations_build.cmake)
+    include(tests/tests.cmake)
 endif()
 
 message(STATUS "\n"

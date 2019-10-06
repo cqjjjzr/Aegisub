@@ -30,6 +30,7 @@ addons:
     - libpulse-dev
     - autopoint
     - libgtest-dev
+    - conan
 
 matrix:
   include:
