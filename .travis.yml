@@ -12,30 +12,15 @@ addons:
         key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
     packages:
     - libasound2-dev
-    - libfftw3-dev
-    - libhunspell-dev
-    - libfribidi-dev
-    - libass-dev
-    - libicu-dev
     - luarocks
     - cmake
     - build-essential
-    - libboost-all-dev
-    - libffms2-dev
-    - libfontconfig1-dev
-    - libopenal-dev
-    - libuchardet-dev
-    - libwxgtk3.0-dev
-    - portaudio19-dev
-    - libpulse-dev
     - autopoint
-    - libgtest-dev
     - conan
 
 matrix:
   include:
   - {}
-  - env: BUILD_SUIT=autotools
 
 install:
 - sudo luarocks install busted > /dev/null
@@ -43,34 +28,19 @@ install:
 - sudo luarocks install uuid > /dev/null
 # Remove the CMake provided by travis
 - sudo rm -rf /usr/local/cmake*
-- if [ "$BUILD_SUIT" = "autotools" ]; then
-    sudo pip install -U cpp-coveralls;
-    git submodule --quiet init;
-    git submodule --quiet update vendor/googletest;
-  else
-    pushd /usr/src/googletest;
-    sudo cmake .;
-    sudo make install -j2;
-    popd;
-  fi
+- cd ~
+- git clone https://github.com/cqjjjzr/Aegisub-Conan-CMake.git
 
 script:
-- if [ "$BUILD_SUIT" = "autotools" ]; then
-    export CPPFLAGS="-fprofile-arcs -ftest-coverage";
-    export LIBS="-lgcov";
-    ./autogen.sh;
-    ./configure --enable-debug agi_cv_with_openal=yes || cat config.log;
-    make -j2;
-    make test || travis_terminate 1;
-    coveralls --exclude vendor --exclude src --exclude build --exclude tools --exclude libaegisub/windows > /dev/null;
-  else
-    ./build/version.sh .;
-    mkdir build-dir;
-    cd build-dir;
-    cmake -DCMAKE_CXX_FLAGS='-Wall -Wextra -Wno-unused-parameter -pedantic' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=ON -DWITH_TEST=ON ..;
-    make -j2;
-    make test || travis_terminate 1;
-  fi
+- cd tests;
+  ./setup.sh;
+  cd ..;
+  mkdir build-dir;
+  cd build-dir;
+  cmake -DCMAKE_CXX_FLAGS='-Wall -Wextra -Wno-unused-parameter -pedantic' -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=ON -DWITH_CSRI=OFF -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="~/Aegisub-Conan-CMake/dependencies_conan.cmake" ..;
+  make -j2;
+  make test-aegisub -j2;
+  ctest --output-on-failure || travis_terminate 1;
 
 notifications:
   email:
