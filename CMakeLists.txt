@@ -175,7 +175,7 @@ add_executable(Aegisub WIN32
     src/visual_feature.cpp
 )
 
-target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub csri)
+target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub)
 target_compile_definitions(Aegisub PRIVATE CMAKE_BUILD)
 
 include(build/cmake/options.cmake)
