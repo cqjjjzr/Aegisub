@@ -25,6 +25,7 @@ addons:
     - autopoint
     - libjack-dev
     - libgtk2.0-dev
+    - mesa-common-dev
 
 matrix:
   include:
