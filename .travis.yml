@@ -24,6 +24,7 @@ addons:
     - build-essential
     - autopoint
     - libjack-dev
+    - libgtk2.0-dev
 
 matrix:
   include:
