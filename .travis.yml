@@ -27,6 +27,7 @@ addons:
     - libgtk2.0-dev
     - mesa-common-dev
     - libgl1-mesa-dev
+    - libpulse-dev
 
 matrix:
   include:
