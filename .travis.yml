@@ -7,7 +7,7 @@ compiler:
 
 cache:
   directories:
-  - ~/.conan
+  - $HOME/.conan
 
 git:
   submodules: false
