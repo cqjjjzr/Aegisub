@@ -28,6 +28,12 @@ addons:
     - mesa-common-dev
     - libgl1-mesa-dev
     - libpulse-dev
+    - libva-dev
+    - libvdpau-dev
+    - libxcb1-dev
+    - libxcb-shm0-dev
+    - libxcb-shape0-dev
+    - libxcb-xfixes0-dev
 
 matrix:
   include:
