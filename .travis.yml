@@ -23,6 +23,7 @@ addons:
     - cmake
     - build-essential
     - autopoint
+    - libjack-dev
 
 matrix:
   include:
