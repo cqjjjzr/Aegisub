@@ -65,16 +65,16 @@ else()
 endif()
 
 message(STATUS "Aegisub Build: Bootstrapping tests, preparing datas...")
-add_custom_target(test-setup)
+add_custom_target(test-data)
 if(WIN32)
     add_custom_command(
-        TARGET test-setup
+        TARGET test-data
         COMMAND "${PROJECT_SOURCE_DIR}/tests/setup.bat"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests"
     )
 else()
     add_custom_command(
-        TARGET test-setup
+        TARGET test-data
         COMMAND "${PROJECT_SOURCE_DIR}/tests/setup.sh"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests"
     )
