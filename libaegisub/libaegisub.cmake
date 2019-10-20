@@ -75,6 +75,13 @@ elseif(WIN32)
         libaegisub/windows/resources_win.cpp
     )
 endif()
+if(APPLE)
+    target_sources(libaegisub PRIVATE
+        libaegisub/osx/dispatch.mm
+        libaegisub/osx/spellchecker.mm
+        libaegisub/osx/util.mm
+    )
+endif()
 set_target_properties(libaegisub PROPERTIES PREFIX "")
 target_compile_definitions(libaegisub PRIVATE CMAKE_BUILD)
 

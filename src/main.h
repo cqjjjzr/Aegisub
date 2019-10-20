@@ -28,6 +28,7 @@
 // Aegisub Project http://www.aegisub.org/
 
 #include <wx/app.h>
+#include <wx/cmdline.h>
 
 #include "aegisublocale.h"
 
@@ -56,6 +57,9 @@ class AegisubApp : public wxApp {
 	void UnhandledException(bool);
 
 	void OpenFiles(wxArrayStringsAdapter filenames);
+    
+    void OnInitCmdLine(wxCmdLineParser& parser) override;
+    bool OnCmdLineParsed(wxCmdLineParser& parser) override;
 
 	std::vector<FrameMain *> frames;
 public:
@@ -71,6 +75,10 @@ public:
 		override
 #endif
 	;
+};
+
+static const wxCmdLineEntryDesc agiCmdLineDesc[] = {
+    { wxCMD_LINE_OPTION, "r", "resource",  "resources path" }
 };
 
 wxDECLARE_APP(AegisubApp);

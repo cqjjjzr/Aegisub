@@ -40,4 +40,6 @@ boost::optional<wxBitmap> LoadImageRes(std::string_view name, int dir = 0);
 boost::optional<wxIcon> LoadIconRes(std::string_view name);
 /// Load config string resource using name.
 boost::optional<std::string> LoadConfig(std::string_view name);
+    
+void Init(std::string_view path);
 }

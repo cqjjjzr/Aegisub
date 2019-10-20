@@ -1,7 +1,17 @@
 target_compile_definitions(libaegisub PRIVATE "HAVE_ICONV")
 
+include(CheckIncludeFile)
+get_target_property(AEGISUB_INCLUDE_DIRECTORIES Aegisub INCLUDE_DIRECTORIES)
+check_include_file("OpenGL/gl.h" HAVE_OPENGL_GL_H)
+if(HAVE_OPENGL_GL_H)
+    target_compile_definitions(Aegisub PRIVATE "HAVE_OPENGL_GL_H")
+endif()
+
 if(WIN32)
     target_sources(Aegisub PRIVATE src/font_file_lister_gdi.cpp)
+endif()
+if(APPLE)
+    target_sources(Aegisub PRIVATE src/font_file_lister_coretext.mm)
 endif()
 if(WITH_FONTCONFIG)
     target_sources(Aegisub PRIVATE src/font_file_lister_fontconfig.cpp)
