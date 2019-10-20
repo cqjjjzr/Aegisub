@@ -103,3 +103,7 @@ void VisualToolCross::Draw() {
 std::string VisualToolCross::Text(Vector2D v) {
 	return video_res.X() > script_res.X() ? v.Str() : v.DStr();
 }
+
+void VisualToolCross::OnCoordinateSystemsChanged() {
+    gl_text = agi::make_unique<OpenGLText>();
+}

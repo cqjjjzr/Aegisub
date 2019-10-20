@@ -60,7 +60,7 @@ VisualToolDrag::VisualToolDrag(VideoDisplay *parent, agi::Context *context)
 
 void VisualToolDrag::SetToolbar(wxToolBar *tb) {
 	toolbar = tb;
-	toolbar->AddTool(-1, _("Toggle between \\move and \\pos"), ICON(visual_move_conv_move));
+	toolbar->AddTool(114514, _("Toggle between \\move and \\pos"), ICON(visual_move_conv_move));
 	toolbar->Realize();
 	toolbar->Show(true);
 
@@ -77,8 +77,12 @@ void VisualToolDrag::UpdateToggleButtons() {
 
 	if (to_move == button_is_move) return;
 
-	toolbar->SetToolNormalBitmap(toolbar->GetToolByPos(0)->GetId(),
-		to_move ? ICON(visual_move_conv_move) : ICON(visual_move_conv_pos));
+	if (toolbar && toolbar->GetToolsCount() > 0) {
+        auto item = toolbar->FindById(114514);
+        if (item)
+            toolbar->SetToolNormalBitmap(item->GetId(),
+                                         to_move ? ICON(visual_move_conv_move) : ICON(visual_move_conv_pos));
+    }
 	button_is_move = to_move;
 }
 

@@ -338,6 +338,7 @@ void Project::LoadVideo(agi::fs::path path) {
 		context->videoController->SetAspectRatio(dar);
 	else
 		context->videoController->SetAspectRatio(AspectRatio::Default);
+	context->videoController->JumpToFrame(1);
 	context->videoController->JumpToFrame(0);
 }
 
