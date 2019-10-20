@@ -203,9 +203,9 @@ else()
     target_sources(Aegisub PRIVATE src/crash_writer.cpp)
     target_compile_options(Aegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/src/agi_pre.h")
 endif()
-    target_sources(Aegisub PRIVATE src/osx/osx_utils.mm src/osx/retina_helper.mm src/osx/scintilla_ime.mm)
-if(APPLE)
 
+if(APPLE)
+    target_sources(Aegisub PRIVATE src/osx/osx_utils.mm src/osx/retina_helper.mm src/osx/scintilla_ime.mm)
 endif()
 
 if(WIN32)
