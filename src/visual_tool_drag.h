@@ -38,7 +38,7 @@ class wxToolBar;
 /// @brief Moveable features for the positions of each visible line
 class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	/// The subtoolbar for the move/pos conversion button
-	wxToolBar *toolbar;
+	wxToolBar *toolbar = nullptr;
 	/// The feature last clicked on for the double-click handler
 	/// Equal to curFeature during drags; possibly different at all other times
 	/// nullptr if no features have been clicked on or the last clicked on one no

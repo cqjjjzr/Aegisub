@@ -60,6 +60,7 @@ VideoController::VideoController(agi::Context *c)
 }
 
 void VideoController::OnNewVideoProvider(AsyncVideoProvider *new_provider) {
+    if (provider == new_provider) return;
 	Stop();
 	provider = new_provider;
 	color_matrix = provider ? provider->GetColorSpace() : "";

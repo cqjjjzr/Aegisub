@@ -100,11 +100,11 @@ void VideoOutGL::DetectOpenGLCapabilities() {
 /// @param height The frame's height
 /// @param format The frame's format
 /// @param bpp The frame's bytes per pixel
-void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, bool flipped) {
+void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, bool flipped, bool force) {
 	using namespace std;
 
 	// Do nothing if the frame size and format are unchanged
-	if (width == frameWidth && height == frameHeight && format == frameFormat && flipped == frameFlipped) return;
+	if (width == frameWidth && height == frameHeight && format == frameFormat && flipped == frameFlipped && !force) return;
 	frameWidth  = width;
 	frameHeight = height;
 	frameFormat = format;
@@ -159,6 +159,7 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 	CHECK_ERROR(glNewList(dl, GL_COMPILE));
 
 	CHECK_ERROR(glClearColor(0,0,0,0));
+    //glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 	CHECK_ERROR(glClearStencil(0));
 	CHECK_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
@@ -250,10 +251,10 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 	}
 }
 
-void VideoOutGL::UploadFrameData(VideoFrame const& frame) {
+void VideoOutGL::UploadFrameData(VideoFrame const& frame, bool viewportDirty) {
 	if (frame.height == 0 || frame.width == 0) return;
 
-	InitTextures(frame.width, frame.height, GL_BGRA_EXT, 4, frame.flipped);
+	InitTextures(frame.width, frame.height, GL_BGRA_EXT, 4, frame.flipped, viewportDirty);
 
 	// Set the row length, needed to be able to upload partial rows
 	CHECK_ERROR(glPixelStorei(GL_UNPACK_ROW_LENGTH, frame.pitch / 4));

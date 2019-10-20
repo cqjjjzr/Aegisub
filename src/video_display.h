@@ -70,6 +70,10 @@ class VideoDisplay final : public wxGLCanvas {
 	/// The size of the video in screen at the current zoom level, which may not
 	/// be the same as the actual client size of the display
 	wxSize videoSize;
+	/// We need to recreate wxGLContext every time the size changes
+	bool sizeDirty = false;
+	/// We need to recreate all textures when context recreates
+	bool contextDirty = false;
 
 	Vector2D last_mouse_pos, mouse_pos;
 

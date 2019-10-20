@@ -139,8 +139,11 @@ bool VideoDisplay::InitContext() {
 	if (GetClientSize() == wxSize(0, 0))
 		return false;
 
-	if (!glContext)
-		glContext = agi::make_unique<wxGLContext>(this);
+ 	if (!glContext || sizeDirty) {
+        glContext = agi::make_unique<wxGLContext>(this);
+        contextDirty = true;
+    }
+ 	sizeDirty = false;
 
 	SetCurrent(*glContext);
 	return true;
@@ -161,9 +164,11 @@ void VideoDisplay::Render() try {
 	if (!tool)
 		cmd::call("video/tool/cross", con);
 
+	bool videoOutRefreshed = false;
 	try {
 		if (pending_frame) {
-			videoOut->UploadFrameData(*pending_frame);
+			videoOut->UploadFrameData(*pending_frame, contextDirty);
+            videoOutRefreshed = true;
 			pending_frame.reset();
 		}
 	}
@@ -189,8 +194,7 @@ void VideoDisplay::Render() try {
 
 	if (!viewport_height || !viewport_width)
 		PositionVideo();
-
-	videoOut->Render(viewport_left, viewport_bottom, viewport_width, viewport_height);
+    videoOut->Render(viewport_left, viewport_bottom, viewport_width, viewport_height);
 	E(glViewport(0, std::min(viewport_bottom, 0), videoSize.GetWidth(), videoSize.GetHeight()));
 
 	E(glMatrixMode(GL_PROJECTION));
@@ -213,9 +217,12 @@ void VideoDisplay::Render() try {
 		}
 	}
 
-	if ((mouse_pos || !autohideTools->GetBool()) && tool)
-		tool->Draw();
+	if ((mouse_pos || !autohideTools->GetBool()) && tool) {
+        tool->Draw();
+    }
 
+	if (videoOutRefreshed)
+        contextDirty = false;
 	SwapBuffers();
 }
 catch (const agi::Exception &err) {
@@ -329,6 +336,7 @@ void VideoDisplay::UpdateSize() {
 		GetGrandParent()->Layout();
 	}
 
+    sizeDirty = true;
 	PositionVideo();
 }
 

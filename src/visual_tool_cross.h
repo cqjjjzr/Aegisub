@@ -35,6 +35,8 @@ class VisualToolCross final : public VisualTool<VisualDraggableFeature> {
 	void OnDoubleClick() override;
 	void Draw() override;
 	std::string Text(Vector2D v);
+
+	void OnCoordinateSystemsChanged() override;
 public:
 	VisualToolCross(VideoDisplay *parent, agi::Context *context);
 	~VisualToolCross();

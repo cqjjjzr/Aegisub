@@ -122,8 +122,8 @@ void VideoBox::UpdateTimeBoxes() {
 		VideoPosition->SetForegroundColour(to_wx(OPT_GET("Colour/Subtitle Grid/Selection")->GetColor()));
 	}
 	else {
-		VideoPosition->SetBackgroundColour(wxNullColour);
-		VideoPosition->SetForegroundColour(wxNullColour);
+		VideoPosition->SetBackgroundColour(*wxWHITE);
+		VideoPosition->SetForegroundColour(*wxBLACK);
 	}
 
 	AssDialogue *active_line = context->selectionController->GetActiveLine();
