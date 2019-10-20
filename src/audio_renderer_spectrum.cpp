@@ -215,7 +215,8 @@ void AudioSpectrumRenderer::Render(wxBitmap &bmp, int start, AudioRenderingStyle
 		return;
 
 	assert(bmp.IsOk());
-	assert(bmp.GetDepth() == 24);
+	//int depth = bmp.GetDepth();
+	//assert(bmp.GetDepth() == 24);
 
 	int end = start + bmp.GetWidth();
 
@@ -278,7 +279,7 @@ void AudioSpectrumRenderer::Render(wxBitmap &bmp, int start, AudioRenderingStyle
 		}
 	}
 
-	wxBitmap tmpbmp(img);
+	wxBitmap tmpbmp(img, 32);
 	wxMemoryDC targetdc(bmp);
 	targetdc.DrawBitmap(tmpbmp, 0, 0);
 }
