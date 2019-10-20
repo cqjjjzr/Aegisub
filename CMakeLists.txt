@@ -11,6 +11,7 @@ include(build/cmake/git_version.cmake)
 
 include(libaegisub/libaegisub.cmake) # Not using add_subdirectory to configure dependencies
 include_directories("libaegisub/include")
+include_directories("src")
 
 add_executable(Aegisub WIN32
     src/command/app.cpp
@@ -202,9 +203,16 @@ else()
     target_sources(Aegisub PRIVATE src/crash_writer.cpp)
     target_compile_options(Aegisub PRIVATE -include "${PROJECT_SOURCE_DIR}/src/agi_pre.h")
 endif()
+    target_sources(Aegisub PRIVATE src/osx/osx_utils.mm src/osx/retina_helper.mm src/osx/scintilla_ime.mm)
+if(APPLE)
+
+endif()
 
 if(WIN32)
     add_compile_definitions("_UNICODE" "UNICODE")
+endif()
+if(APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000") # luajit
 endif()
 
 include(build/cmake/install.cmake)
@@ -238,6 +246,7 @@ message(STATUS "\n"
     "  FFTW3:                 ${WITH_FFTW3}\n"
     "  Hunspell:              ${WITH_HUNSPELL}\n"
     "  uchardet:              ${WITH_UCHARDET}\n"
+    "  fontconfig:            ${WITH_FONTCONFIG}\n"
     "  LuaJIT:                ON\n"
     "\n"
     "Options\n"
