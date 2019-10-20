@@ -168,6 +168,7 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 	alt_down = event.AltDown();
 
 	mouse_pos = event.GetPosition();
+	if (!parent->IsInArea(mouse_pos.X(), mouse_pos.Y())) return;
 
 	if (event.Leaving()) {
 		mouse_pos = Vector2D();
@@ -264,7 +265,8 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 	if (active_line && left_double)
 		OnDoubleClick();
 
-	parent->Render();
+
+	//parent->Render();
 
 	// Only coalesce the changes made in a single drag
 	if (!event.LeftIsDown())

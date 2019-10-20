@@ -34,6 +34,8 @@ VisualToolCross::VisualToolCross(VideoDisplay *parent, agi::Context *context)
 , gl_text(agi::make_unique<OpenGLText>())
 {
 	parent->SetCursor(wxCursor(wxCURSOR_BLANK));
+    gl_text->SetFont("Verdana", 12, true, false);
+    gl_text->SetColour(agi::Color(255, 255, 255, 255));
 }
 
 VisualToolCross::~VisualToolCross() {
@@ -80,8 +82,6 @@ void VisualToolCross::Draw() {
 	std::string mouse_text = Text(ToScriptCoords(shift_down ? video_res - mouse_pos : mouse_pos));
 
 	int tw, th;
-	gl_text->SetFont("Verdana", 12, true, false);
-	gl_text->SetColour(agi::Color(255, 255, 255, 255));
 	gl_text->GetExtent(mouse_text, tw, th);
 
 	// Place the text in the corner of the cross closest to the center of the video
@@ -106,4 +106,6 @@ std::string VisualToolCross::Text(Vector2D v) {
 
 void VisualToolCross::OnCoordinateSystemsChanged() {
     gl_text = agi::make_unique<OpenGLText>();
+    gl_text->SetFont("Verdana", 12, true, false);
+    gl_text->SetColour(agi::Color(255, 255, 255, 255));
 }
