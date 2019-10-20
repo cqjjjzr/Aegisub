@@ -173,4 +173,9 @@ public:
 
 	/// Discard all OpenGL state
 	void Unload();
+
+	bool IsInArea(int x, int y) {
+	    return x >= viewport_left && y >= viewport_left
+	    && x <= viewport_left + viewport_width && y <= viewport_top + viewport_height;
+	}
 };
