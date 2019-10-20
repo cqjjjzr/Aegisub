@@ -57,7 +57,7 @@ AudioRendererBitmapCacheBitmapFactory::AudioRendererBitmapCacheBitmapFactory(Aud
 
 std::unique_ptr<wxBitmap> AudioRendererBitmapCacheBitmapFactory::ProduceBlock(int /* i */)
 {
-	return agi::make_unique<wxBitmap>(renderer->cache_bitmap_width, renderer->pixel_height, 24);
+    return std::unique_ptr<wxBitmap>(new wxBitmap(renderer->cache_bitmap_width, renderer->pixel_height, 32));
 }
 
 size_t AudioRendererBitmapCacheBitmapFactory::GetBlockSize() const
@@ -201,9 +201,11 @@ void AudioRenderer::Render(wxDC &dc, wxPoint origin, const int start, const int 
 
 	for (int i = firstbitmap; i <= lastbitmap; ++i)
 	{
-		dc.DrawBitmap(GetCachedBitmap(i, style), origin);
+	    auto& bitmap = GetCachedBitmap(i, style);
+		dc.DrawBitmap(bitmap, origin);
 		origin.x += cache_bitmap_width;
 	}
+	dc.SetUserScale(1.0f, 1.0f);
 
 	// Now render blank audio from origin to end
 	if (origin.x < lastx)
