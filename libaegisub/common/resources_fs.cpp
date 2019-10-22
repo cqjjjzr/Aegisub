@@ -45,21 +45,21 @@ const std::string configResourceExt = ".json";
 
 bool initialized = false;
 std::list<boost::filesystem::path> foundFiles;
-    
+
 void Init(std::string_view path) {
     auto resourcePath = boost::filesystem::path(std::string(path));
     if (!boost::filesystem::is_directory(resourcePath)) return;
-    
+
     for (auto& entry : boost::make_iterator_range(boost::filesystem::recursive_directory_iterator(resourcePath), {})) {
         if (!boost::filesystem::is_regular_file(entry)) continue;
-        
+
         auto extension = boost::filesystem::extension(entry);
         if (std::find(resourceExts.begin(), resourceExts.end(), extension) == resourceExts.end()) continue;
-        
+
         foundFiles.push_back(entry);
     }
 }
-    
+
 wxImage LoadWxImage(std::string& name)
 {
     auto ptrStream = agi::io::Open(name, true);
@@ -75,7 +75,9 @@ wxImage LoadWxImage(std::string& name)
 boost::optional<wxBitmap> LoadImageRes(std::string_view name, int dir)
 {
     auto filename = std::string(name) + imageResourceExt;
-    auto fullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; })->generic_string();
+    auto pFullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; });
+    if (pFullFilename == foundFiles.end()) return boost::none;
+    auto fullFilename = pFullFilename->generic_string();
     if (!agi::fs::FileExists(fullFilename)) return boost::none;
     auto image = LoadWxImage(fullFilename);
     if (dir != wxLayout_RightToLeft)
@@ -85,7 +87,9 @@ boost::optional<wxBitmap> LoadImageRes(std::string_view name, int dir)
 boost::optional<wxIcon> LoadIconRes(std::string_view name)
 {
     auto filename = std::string(name) + iconResourceExt;
-    auto fullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; })->generic_string();
+    auto pFullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; });
+    if (pFullFilename == foundFiles.end()) return boost::none;
+    auto fullFilename = pFullFilename->generic_string();
     if (!agi::fs::FileExists(fullFilename)) return boost::none;
     auto image = LoadWxImage(fullFilename);
     wxIcon icon;
@@ -95,7 +99,9 @@ boost::optional<wxIcon> LoadIconRes(std::string_view name)
 boost::optional<std::string> LoadConfig(std::string_view name)
 {
     auto filename = std::string(name) + configResourceExt;
-    auto fullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; })->generic_string();
+    auto pFullFilename = std::find_if(foundFiles.begin(), foundFiles.end(), [&](auto& it) -> bool { return it.filename() == filename; });
+    if (pFullFilename == foundFiles.end()) return boost::none;
+    auto fullFilename = pFullFilename->generic_string();
     if (!agi::fs::FileExists(fullFilename)) return boost::none;
     return agi::io::ReadFile(fullFilename);
 }
