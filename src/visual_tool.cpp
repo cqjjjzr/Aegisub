@@ -104,7 +104,6 @@ void VisualToolBase::OnActiveLineChanged(AssDialogue *new_line) {
 	if (new_line != active_line) {
 		active_line = new_line;
 		OnLineChanged();
-        parent->Refresh();
 	}
 }
 
@@ -172,7 +171,6 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 
 	if (event.Leaving()) {
 		mouse_pos = Vector2D();
-        parent->Refresh();
 		return;
 	}
 
@@ -226,7 +224,6 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 
 		UpdateHold();
 		Commit();
-
 	}
 	else if (left_click) {
 		drag_start = mouse_pos;
@@ -264,9 +261,6 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 
 	if (active_line && left_double)
 		OnDoubleClick();
-
-
-    parent->Refresh();
 
 	// Only coalesce the changes made in a single drag
 	if (!event.LeftIsDown())

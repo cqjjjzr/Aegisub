@@ -642,7 +642,6 @@ struct video_show_overscan final : public validator_video_loaded {
 
 	void operator()(agi::Context *c) override {
 		OPT_SET("Video/Overscan Mask")->SetBool(!OPT_GET("Video/Overscan Mask")->GetBool());
-        c->videoDisplay->Refresh();
 	}
 };
 
