@@ -54,6 +54,7 @@
 #include <libaegisub/make_unique.h>
 
 #include <algorithm>
+#include <chrono>
 #include <wx/combobox.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
@@ -149,8 +150,14 @@ void VideoDisplay::UploadFrameData(VideoFrame *frame) {
 	pending_frame = frame;
 }
 
+#include <iostream>
 void VideoDisplay::Render() try {
     wxPaintDC dc(this);
+
+    auto curr = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
+    if (curr - lastRenderTime < 20L) return;
+    lastRenderTime = curr;
+
 	if (!con->project->VideoProvider() || !InitContext() || (!videoOut && !pending_frame))
 		return;
 
@@ -329,7 +336,6 @@ void VideoDisplay::UpdateSize() {
 	}
 
 	PositionVideo();
-    Refresh();
 }
 
 void VideoDisplay::OnSizeEvent(wxSizeEvent &event) {
@@ -343,7 +349,6 @@ void VideoDisplay::OnSizeEvent(wxSizeEvent &event) {
 	else {
 		PositionVideo();
 	}
-    Refresh();
 }
 
 void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {

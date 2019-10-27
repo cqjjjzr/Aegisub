@@ -185,8 +185,6 @@ void VisualToolDrag::OnSelectedSetChanged() {
 		}
 	}
 
-    if (any_changed)
-        parent->Refresh();
 	selection = std::move(new_sel);
 }
 

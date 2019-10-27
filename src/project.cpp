@@ -328,7 +328,7 @@ bool Project::DoLoadVideo(agi::fs::path const& path) {
 	AnnounceKeyframesModified(keyframes);
 	AnnounceTimecodesModified(timecodes);
 
-    renderLoop->Start();
+    renderLoop->StartLoop();
 	return true;
 }
 

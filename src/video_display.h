@@ -113,6 +113,9 @@ class VideoDisplay final : public wxGLCanvas {
 	int scale_factor;
 	agi::signal::Connection scale_factor_connection;
 
+	/// For frequency limit
+	long long lastRenderTime = 0;
+
 	/// @brief Draw an overscan mask
 	/// @param horizontal_percent The percent of the video reserved horizontally
 	/// @param vertical_percent The percent of the video reserved vertically
@@ -121,6 +124,9 @@ class VideoDisplay final : public wxGLCanvas {
 	/// @brief Initialize the gl context and set the active context to this one
 	/// @return Could the context be set?
 	bool InitContext();
+
+    /// @brief Render the currently visible frame
+    void Render();
 
 	/// @brief Set the size of the display based on the current zoom and video resolution
 	void UpdateSize();
@@ -149,9 +155,6 @@ public:
 		wxWindow* parent,
 		agi::Context *context);
 	~VideoDisplay();
-
-	/// @brief Render the currently visible frame
-	void Render();
 
 	/// @brief Set the zoom level
 	/// @param value The new zoom level

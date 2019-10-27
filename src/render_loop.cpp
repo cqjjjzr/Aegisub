@@ -21,7 +21,7 @@
 
 void RenderLoop::StartLoop()
 {
-    Start(20);
+    Start(30);
 }
 
 void RenderLoop::Notify()
