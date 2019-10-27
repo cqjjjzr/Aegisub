@@ -33,7 +33,6 @@
 #include "ass_file.h"
 #include "audio_controller.h"
 #include "compat.h"
-#include "include/aegisub/context.h"
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"
@@ -53,6 +52,7 @@ VideoController::VideoController(agi::Context *c)
 	context->project->AddVideoProviderListener(&VideoController::OnNewVideoProvider, this),
 	context->selectionController->AddActiveLineListener(&VideoController::OnActiveLineChanged, this),
 }))
+, video_cache(new VideoFrame, new VideoFrame)
 {
 	Bind(EVT_VIDEO_ERROR, &VideoController::OnVideoError, this);
 	Bind(EVT_SUBTITLES_ERROR, &VideoController::OnSubtitlesError, this);
@@ -81,6 +81,8 @@ void VideoController::OnSubtitlesCommit(int type, const AssDialogue *changed) {
 		provider->LoadSubtitles(context->ass.get());
 	else
 		provider->UpdateSubtitles(context->ass.get(), changed);
+    RequestFrame();
+	// _TODO Rerender video frame here
 }
 
 void VideoController::OnActiveLineChanged(AssDialogue *line) {
@@ -92,7 +94,9 @@ void VideoController::OnActiveLineChanged(AssDialogue *line) {
 
 void VideoController::RequestFrame() {
 	context->ass->Properties.video_position = frame_n;
-	provider->RequestFrame(frame_n, TimeAtFrame(frame_n));
+    auto allocate = [&]() -> VideoFrame * { return video_cache.get_buffer_to_write(); };
+    auto onComplete = [&](VideoFrame* buf) -> void { video_cache.release_write(buf); };
+    provider->RequestFrame(allocate, frame_n, TimeAtFrame(frame_n), onComplete, onComplete);
 }
 
 void VideoController::JumpToFrame(int n) {

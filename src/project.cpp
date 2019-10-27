@@ -36,6 +36,7 @@
 #include "utils.h"
 #include "video_controller.h"
 #include "video_display.h"
+#include "render_loop.h"
 
 #include <libaegisub/audio/provider.h>
 #include <libaegisub/format_path.h>
@@ -59,6 +60,8 @@ Project::Project(agi::Context *c) : context(c) {
 	OPT_SUB("Provider/Video/FFmpegSource/Unsafe Seeking", &Project::ReloadVideo, this);
 	OPT_SUB("Subtitle/Provider", &Project::ReloadVideo, this);
 	OPT_SUB("Video/Provider", &Project::ReloadVideo, this);
+
+    renderLoop = new RenderLoop(c);
 }
 
 Project::~Project() { }
@@ -324,6 +327,8 @@ bool Project::DoLoadVideo(agi::fs::path const& path) {
 
 	AnnounceKeyframesModified(keyframes);
 	AnnounceTimecodesModified(timecodes);
+
+    renderLoop->Start();
 	return true;
 }
 
@@ -343,6 +348,8 @@ void Project::LoadVideo(agi::fs::path path) {
 }
 
 void Project::CloseVideo() {
+    renderLoop->Stop();
+
 	AnnounceVideoProviderModified(nullptr);
 	video_provider.reset();
 	SetPath(video_file, "?video", "", "");

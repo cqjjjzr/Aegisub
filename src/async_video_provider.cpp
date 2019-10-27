@@ -23,6 +23,8 @@
 #include "video_frame.h"
 #include "video_provider_manager.h"
 
+#include <boost/random.hpp>
+
 #include <libaegisub/dispatch.h>
 
 enum {
@@ -30,27 +32,15 @@ enum {
 	SUBS_FILE_ALREADY_LOADED = -2
 };
 
-std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time, bool raw) {
-	// Find an unused buffer to use or allocate a new one if needed
-	std::shared_ptr<VideoFrame> frame;
-	for (auto& buffer : buffers) {
-		if (buffer.use_count() == 1) {
-			frame = buffer;
-			break;
-		}
-	}
-
-	if (!frame) {
-		frame = std::make_shared<VideoFrame>();
-		buffers.push_back(frame);
-	}
+void AsyncVideoProvider::ProcFrame(VideoFrame& frame, int frame_number, double time, bool raw) {
+    frame.serialId = random_dist(random_gen);
 
 	try {
-		source_provider->GetFrame(frame_number, *frame);
+		source_provider->GetFrame(frame_number, frame);
 	}
 	catch (VideoProviderError const& err) { throw VideoProviderErrorEvent(err); }
 
-	if (raw || !subs_provider || !subs) return frame;
+	if (raw || !subs_provider || !subs) return;
 
 	try {
 		if (single_frame != frame_number && single_frame != SUBS_FILE_ALREADY_LOADED) {
@@ -74,11 +64,9 @@ std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, doub
 	catch (agi::Exception const& err) { throw SubtitlesProviderErrorEvent(err.GetMessage()); }
 
 	try {
-		subs_provider->DrawSubtitles(*frame, time / 1000.);
+		subs_provider->DrawSubtitles(frame, time / 1000.);
 	}
 	catch (agi::UserCancelException const&) { }
-
-	return frame;
 }
 
 static std::unique_ptr<SubtitlesProvider> get_subs_provider(wxEvtHandler *evt_handler, agi::BackgroundRunner *br) {
@@ -96,6 +84,7 @@ AsyncVideoProvider::AsyncVideoProvider(agi::fs::path const& video_filename, std:
 , subs_provider(get_subs_provider(parent, br))
 , source_provider(VideoProviderFactory::GetProvider(video_filename, colormatrix, br))
 , parent(parent)
+, random_dist(1, 1e6)
 {
 }
 
@@ -104,18 +93,17 @@ AsyncVideoProvider::~AsyncVideoProvider() {
 	worker->Sync([]{});
 }
 
-void AsyncVideoProvider::LoadSubtitles(const AssFile *new_subs) throw() {
+void AsyncVideoProvider::LoadSubtitles(const AssFile *new_subs) noexcept {
 	uint_fast32_t req_version = ++version;
 
 	auto copy = new AssFile(*new_subs);
 	worker->Async([=]{
 		subs.reset(copy);
 		single_frame = NEW_SUBS_FILE;
-		ProcAsync(req_version, false);
 	});
 }
 
-void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialogue *changed) throw() {
+void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialogue *changed) noexcept {
 	uint_fast32_t req_version = ++version;
 
 	// Copy just the line which were changed, then replace the line at the
@@ -130,18 +118,39 @@ void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialo
 		delete &*it--;
 
 		single_frame = NEW_SUBS_FILE;
-		ProcAsync(req_version, true);
 	});
 }
 
-void AsyncVideoProvider::RequestFrame(int new_frame, double new_time) throw() {
+void AsyncVideoProvider::RequestFrame(VideoFrame& frame, int new_frame, double new_time) noexcept {
 	uint_fast32_t req_version = ++version;
 
-	worker->Async([=]{
+	worker->Async([&]{
 		time = new_time;
 		frame_number = new_frame;
-		ProcAsync(req_version, false);
+		ProcAsync(frame, req_version, false);
 	});
+}
+
+void AsyncVideoProvider::RequestFrame(
+    const std::function<VideoFrame*(void)> allocator,
+    const int frameNum, const double newTime,
+    const std::function<void(VideoFrame*)> onComplete,
+    const std::function<void(VideoFrame*)> onError) noexcept
+{
+    uint_fast32_t req_version = ++version;
+
+    worker->Async([=]{
+        time = newTime;
+        frame_number = frameNum;
+        auto pFrame = allocator();
+        try {
+            ProcAsync(*pFrame, req_version, false);
+            onComplete(pFrame);
+        } catch (...) {
+            onError(pFrame);
+            // TODO handle VideoProviderErrorEvent and SubtitleProviderErrorEvent
+        }
+    });
 }
 
 bool AsyncVideoProvider::NeedUpdate(std::vector<AssDialogueBase const*> const& visible_lines) {
@@ -173,7 +182,7 @@ bool AsyncVideoProvider::NeedUpdate(std::vector<AssDialogueBase const*> const& v
 	return false;
 }
 
-void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated) {
+void AsyncVideoProvider::ProcAsync(VideoFrame& frame, uint_fast32_t req_version, bool check_updated) {
 	// Only actually produce the frame if there's no queued changes waiting
 	if (req_version < version || frame_number < 0) return;
 
@@ -191,21 +200,13 @@ void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated
 		last_lines.push_back(*line);
 	last_rendered = frame_number;
 
-	try {
-		FrameReadyEvent *evt = new FrameReadyEvent(ProcFrame(frame_number, time), time);
-		evt->SetEventType(EVT_FRAME_READY);
-		parent->QueueEvent(evt);
-	}
-	catch (wxEvent const& err) {
-		// Pass error back to parent thread
-		parent->QueueEvent(err.Clone());
-	}
+    ProcFrame(frame, frame_number, time);
+    // TODO notify that the frame is ready
 }
 
-std::shared_ptr<VideoFrame> AsyncVideoProvider::GetFrame(int frame, double time, bool raw) {
+void AsyncVideoProvider::GetFrame(VideoFrame& outFrame, int frame, double time, bool raw) {
 	std::shared_ptr<VideoFrame> ret;
-	worker->Sync([&]{ ret = ProcFrame(frame, time, raw); });
-	return ret;
+	worker->Sync([&]{ ProcFrame(outFrame, frame, time, raw); });
 }
 
 void AsyncVideoProvider::SetColorSpace(std::string const& matrix) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Thomas Goyne <plorkyeran@aegisub.org>
+// Copyright (c) 2019, Charlie Jiang <cqjjjzr@126.com>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,20 +13,26 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 // Aegisub Project http://www.aegisub.org/
-#pragma once
 
-#include <vector>
+#include "render_loop.h"
 
-class wxImage;
+#include "video_controller.h"
+#include "video_display.h"
 
-struct VideoFrame {
-	std::vector<unsigned char> data;
-	size_t width;
-	size_t height;
-	size_t pitch;
-	bool flipped;
+void RenderLoop::StartLoop()
+{
+    Start(20);
+}
 
-    int serialId;
-};
+void RenderLoop::Notify()
+{
+    auto& cache = context->videoController->video_cache;
+    auto frame = cache.get_latest_buffer_to_read();
+    auto display = context->videoDisplay;
 
-wxImage GetImage(VideoFrame const& frame);
+    display->UploadFrameData(frame);
+    display->Refresh();
+    display->Update();
+
+    cache.release_read(frame);
+}

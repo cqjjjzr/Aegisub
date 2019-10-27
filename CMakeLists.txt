@@ -174,6 +174,7 @@ add_executable(Aegisub WIN32
     src/video_provider_yuv4mpeg.cpp
     src/video_slider.cpp
     src/visual_feature.cpp
+    src/render_loop.cpp
 )
 
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub)
@@ -186,6 +187,7 @@ include(build/cmake/dependencies_sources.cmake)
 
 if (MSVC)
     add_compile_options("/utf-8")
+    add_compile_definitions("_UNICODE" "UNICODE")
 
 	target_compile_definitions(libaegisub PRIVATE NOMINMAX INITGUID)
 	target_compile_definitions(Aegisub PRIVATE NOMINMAX INITGUID)
@@ -206,13 +208,8 @@ endif()
 
 if(APPLE)
     target_sources(Aegisub PRIVATE src/osx/osx_utils.mm src/osx/retina_helper.mm src/osx/scintilla_ime.mm)
-endif()
-
-if(WIN32)
-    add_compile_definitions("_UNICODE" "UNICODE")
-endif()
-if(APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000") # luajit
+    add_compile_definitions("GL_SILENCE_DEPRECATION")
 endif()
 
 include(build/cmake/install.cmake)

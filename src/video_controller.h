@@ -29,20 +29,24 @@
 
 #include <libaegisub/signal.h>
 #include <libaegisub/vfr.h>
+#include <libaegisub/buffer_cache.h>
 
 #include <chrono>
 #include <set>
 
 #include <wx/timer.h>
 
+#include "video_frame.h"
+#include "include/aegisub/context.h"
+
 class AssDialogue;
 class AsyncVideoProvider;
+class RenderLoop;
 struct SubtitlesProviderErrorEvent;
 struct VideoProviderErrorEvent;
 
 namespace agi {
-	struct Context;
-	class OptionValue;
+    class OptionValue;
 }
 
 enum class AspectRatio {
@@ -55,6 +59,8 @@ enum class AspectRatio {
 
 /// Manage stuff related to video playback
 class VideoController final : public wxEvtHandler {
+    friend class RenderLoop;
+
 	/// Current frame number changed (new frame number)
 	agi::signal::Signal<int> Seek;
 	/// Aspect ratio was changed (type, value)
@@ -93,6 +99,9 @@ class VideoController final : public wxEvtHandler {
 
 	/// The current AR type
 	AspectRatio ar_type = AspectRatio::Default;
+
+    /// Cache for rendering videos.
+	buffer_cache<VideoFrame> video_cache;
 
 	/// Cached option for audio playing when frame stepping
 	const agi::OptionValue* playAudioOnStep;
