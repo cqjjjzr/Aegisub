@@ -289,7 +289,9 @@ struct video_focus_seek final : public validator_video_loaded {
 
 wxImage get_image(agi::Context *c, bool raw) {
 	auto frame = c->videoController->GetFrameN();
-	return GetImage(*c->project->VideoProvider()->GetFrame(frame, c->project->Timecodes().TimeAtFrame(frame), raw));
+    auto buf = VideoFrame();
+    c->project->VideoProvider()->GetFrame(buf, frame, c->project->Timecodes().TimeAtFrame(frame), raw);
+	return GetImage(buf);
 }
 
 struct video_frame_copy final : public validator_video_loaded {
@@ -640,7 +642,7 @@ struct video_show_overscan final : public validator_video_loaded {
 
 	void operator()(agi::Context *c) override {
 		OPT_SET("Video/Overscan Mask")->SetBool(!OPT_GET("Video/Overscan Mask")->GetBool());
-		c->videoDisplay->Render();
+        c->videoDisplay->Refresh();
 	}
 };
 

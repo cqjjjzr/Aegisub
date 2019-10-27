@@ -75,7 +75,7 @@ namespace {
 		void update_from_textbox();
 		void update_from_textbox(wxCommandEvent&);
 
-		bool check_exists(int pos, int x, int y, int* lrud, double* orig, unsigned char tolerance);
+		bool check_exists(VideoFrame& buf, int pos, int x, int y, int* lrud, double* orig, unsigned char tolerance);
 		void process(wxCommandEvent&);
 	public:
 		DialogAlignToVideo(agi::Context* context);
@@ -95,7 +95,7 @@ namespace {
 		auto maximized = OPT_GET("Tool/Align to Video/Maximized")->GetBool();
 
 		current_n_frame = context->videoController->GetFrameN();
-		current_frame = *context->project->VideoProvider()->GetFrame(current_n_frame, 0, true);
+		context->project->VideoProvider()->GetFrame(current_frame, current_n_frame, 0, true);
 		preview_image = GetImage(current_frame);
 
 		preview_frame = new ImagePositionPicker(this, preview_image, [&](int x, int y, unsigned char r, unsigned char g, unsigned char b) -> void {
@@ -291,15 +291,16 @@ namespace {
 		rgb2lab(r, g, b, lab);
 
 		int pos = current_n_frame;
-		auto frame = provider->GetFrame(pos, -1, true);
-		auto view = interleaved_view(frame->width, frame->height, reinterpret_cast<boost::gil::bgra8_pixel_t*>(frame->data.data()), frame->pitch);
-		if (frame->flipped)
-			y = frame->height - y;
+        auto frame = VideoFrame();
+		provider->GetFrame(frame, pos, -1, true);
+		auto view = interleaved_view(frame.width, frame.height, reinterpret_cast<boost::gil::bgra8_pixel_t*>(frame.data.data()), frame.pitch);
+		if (frame.flipped)
+			y = frame.height - y;
 		int lrud[4];
 		calculate_point(view, x, y, lab, tolerance, lrud);
 
 		// find forward
-#define CHECK_EXISTS_POS check_exists(pos, x, y, lrud, lab, tolerance)
+#define CHECK_EXISTS_POS check_exists(frame, pos, x, y, lrud, lab, tolerance)
 		while (pos >= 0)
 		{
 			if (CHECK_EXISTS_POS)
@@ -331,12 +332,12 @@ namespace {
 
 
 
-	bool DialogAlignToVideo::check_exists(int pos, int x, int y, int* lrud, double* orig, unsigned char tolerance)
+	bool DialogAlignToVideo::check_exists(VideoFrame& frame, int pos, int x, int y, int* lrud, double* orig, unsigned char tolerance)
 	{
-		auto frame = provider->GetFrame(pos, -1, true);
-		auto view = interleaved_view(frame->width, frame->height, reinterpret_cast<boost::gil::bgra8_pixel_t*>(frame->data.data()), frame->pitch);
-		if (frame->flipped)
-			y = frame->height - y;
+		provider->GetFrame(frame, pos, -1, true);
+		auto view = interleaved_view(frame.width, frame.height, reinterpret_cast<boost::gil::bgra8_pixel_t*>(frame.data.data()), frame.pitch);
+		if (frame.flipped)
+			y = frame.height - y;
 		int actual[4];
 		if (!calculate_point(view, x, y, orig, tolerance, actual)) return false;
 		int dl = abs(actual[0] - lrud[0]);

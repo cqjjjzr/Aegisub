@@ -13,6 +13,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 // Aegisub Project http://www.aegisub.org/
+#pragma once
 
 #include <libaegisub/fs_fwd.h>
 #include <libaegisub/signal.h>
@@ -28,6 +29,7 @@ class wxString;
 namespace agi { class AudioProvider; }
 namespace agi { struct Context; }
 struct ProjectProperties;
+class RenderLoop;
 
 class Project {
 	std::unique_ptr<agi::AudioProvider> audio_provider;
@@ -48,6 +50,8 @@ class Project {
 	bool video_has_subtitles = false;
 	DialogProgress *progress = nullptr;
 	agi::Context *context = nullptr;
+
+    RenderLoop *renderLoop;
 
 	void ShowError(wxString const& message);
 	void ShowError(std::string const& message);

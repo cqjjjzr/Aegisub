@@ -13,6 +13,7 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 // Aegisub Project http://www.aegisub.org/
+#pragma once
 
 #include "include/aegisub/video_provider.h"
 
@@ -21,8 +22,13 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <set>
+
 #include <wx/event.h>
+#include <boost/random.hpp>
+
+#include "video_frame.h"
 
 class AssDialogue;
 class AssFile;
@@ -35,6 +41,12 @@ namespace agi {
 	class BackgroundRunner;
 	namespace dispatch { class Queue; }
 }
+
+class LockableVideoFrame {
+public:
+    VideoFrame frame;
+    std::mutex mutex;
+};
 
 /// An asynchronous video decoding and subtitle rendering wrapper
 class AsyncVideoProvider {
@@ -67,10 +79,10 @@ class AsyncVideoProvider {
 	/// lines have actually changed
 	bool NeedUpdate(std::vector<AssDialogueBase const*> const& visible_lines);
 
-	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false);
+	void ProcFrame(VideoFrame& outFrame, int frame, double time, bool raw = false);
 
 	/// Produce a frame if req_version is still the current version
-	void ProcAsync(uint_fast32_t req_version, bool check_updated);
+	void ProcAsync(VideoFrame& frame, uint_fast32_t req_version, bool check_updated);
 
 	/// Monotonic counter used to drop frames when changes arrive faster than
 	/// they can be rendered
@@ -78,13 +90,16 @@ class AsyncVideoProvider {
 
 	std::vector<std::shared_ptr<VideoFrame>> buffers;
 
+    boost::random::mt19937 random_gen;
+    boost::random::uniform_int_distribution<> random_dist;
+
 public:
 	/// @brief Load the passed subtitle file
 	/// @param subs File to load
 	///
 	/// This function blocks until is it is safe for the calling thread to
 	/// modify subs
-	void LoadSubtitles(const AssFile *subs) throw();
+	void LoadSubtitles(const AssFile *subs) noexcept;
 
 	/// @brief Update a previously loaded subtitle file
 	/// @param subs Subtitle file which was last passed to LoadSubtitles
@@ -92,7 +107,7 @@ public:
 	///
 	/// This function only supports changes to existing lines, and not
 	/// insertions or deletions.
-	void UpdateSubtitles(const AssFile *subs, const AssDialogue *changes) throw();
+	void UpdateSubtitles(const AssFile *subs, const AssDialogue *changes) noexcept;
 
 	/// @brief Queue a request for a frame
 	/// @brief frame Frame number
@@ -100,13 +115,28 @@ public:
 	///
 	/// This merely queues up a request and deletes any pending requests; there
 	/// is no guarantee that the requested frame will ever actually be produced
-	void RequestFrame(int frame, double time) throw();
+	void RequestFrame(VideoFrame& frame, int frameNum, double time) noexcept;
+    /// @brief Queue a request for a frame
+    /// @brief allocator Function to allocate a buffer
+    /// @brief onComplete This function will be called after the rendering was completed
+    /// @brief onError This function will be called if any error happens during rendering
+    /// @brief frame Frame number
+    /// @brief time  Exact start time of the frame in seconds
+    ///
+    /// Note: All provided functions will be run on the worker thread.
+    /// This merely queues up a request and deletes any pending requests; there
+    /// is no guarantee that the requested frame will ever actually be produced
+	void RequestFrame(
+	        const std::function<VideoFrame*(void)> allocator,
+	        const int frameNum, double newTime,
+	        const std::function<void(VideoFrame*)> onComplete, const std::function<void(VideoFrame*)> onError) noexcept;
 
 	/// @brief Synchronously get a frame
+	/// @brief outFrame Frame buffer to receive rendered frame
 	/// @brief frame Frame number
 	/// @brief time  Exact start time of the frame in seconds
 	/// @brief raw   Get raw frame without subtitles
-	std::shared_ptr<VideoFrame> GetFrame(int frame, double time, bool raw = false);
+	void GetFrame(VideoFrame& outFrame, int frame, double time, bool raw = false);
 
 	/// Ask the video provider to change YCbCr matricies
 	void SetColorSpace(std::string const& matrix);

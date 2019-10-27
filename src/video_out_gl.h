@@ -59,7 +59,7 @@ class VideoOutGL {
 	int textureCols = 0;
 
 	void DetectOpenGLCapabilities();
-	void InitTextures(int width, int height, GLenum format, int bpp, bool flipped, bool force);
+	void InitTextures(int width, int height, GLenum format, int bpp, bool flipped);
 
 	VideoOutGL(const VideoOutGL &) = delete;
 	VideoOutGL& operator=(const VideoOutGL&) = delete;
@@ -67,7 +67,7 @@ public:
 	/// @brief Set the frame to be displayed when Render() is called
 	/// @param frame The frame to be displayed
 	/// @param viewportDirty Whether we should invalidate our textures and recreate them
-	void UploadFrameData(VideoFrame const& frame, bool viewportDirty);
+	void UploadFrameData(VideoFrame const& frame);
 
 	/// @brief Render a frame
 	/// @param x Bottom left x coordinate

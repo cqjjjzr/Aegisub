@@ -98,7 +98,6 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 	zoomBox->Bind(wxEVT_COMBOBOX, &VideoDisplay::SetZoomFromBox, this);
 	zoomBox->Bind(wxEVT_TEXT_ENTER, &VideoDisplay::SetZoomFromBoxText, this);
 
-	con->videoController->Bind(EVT_FRAME_READY, &VideoDisplay::UploadFrameData, this);
 	connections = agi::signal::make_vector({
 		con->project->AddVideoProviderListener(&VideoDisplay::UpdateSize, this),
 		con->videoController->AddARChangeListener(&VideoDisplay::UpdateSize, this),
@@ -127,7 +126,6 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 
 VideoDisplay::~VideoDisplay () {
 	Unload();
-	con->videoController->Unbind(EVT_FRAME_READY, &VideoDisplay::UploadFrameData, this);
 }
 
 bool VideoDisplay::InitContext() {
@@ -139,22 +137,20 @@ bool VideoDisplay::InitContext() {
 	if (GetClientSize() == wxSize(0, 0))
 		return false;
 
- 	if (!glContext || sizeDirty) {
+ 	if (!glContext) {
         glContext = agi::make_unique<wxGLContext>(this);
-        contextDirty = true;
     }
- 	sizeDirty = false;
 
 	SetCurrent(*glContext);
 	return true;
 }
 
-void VideoDisplay::UploadFrameData(FrameReadyEvent &evt) {
-	pending_frame = evt.frame;
-	Render();
+void VideoDisplay::UploadFrameData(VideoFrame *frame) {
+	pending_frame = frame;
 }
 
 void VideoDisplay::Render() try {
+    wxPaintDC dc(this);
 	if (!con->project->VideoProvider() || !InitContext() || (!videoOut && !pending_frame))
 		return;
 
@@ -164,12 +160,12 @@ void VideoDisplay::Render() try {
 	if (!tool)
 		cmd::call("video/tool/cross", con);
 
-	bool videoOutRefreshed = false;
 	try {
 		if (pending_frame) {
-			videoOut->UploadFrameData(*pending_frame, contextDirty);
-            videoOutRefreshed = true;
-			pending_frame.reset();
+            if (pending_frame->serialId != last_frame_sid)
+                videoOut->UploadFrameData(*pending_frame);
+            last_frame_sid = pending_frame->serialId;
+            pending_frame = nullptr;
 		}
 	}
 	catch (const VideoOutInitException& err) {
@@ -221,8 +217,6 @@ void VideoDisplay::Render() try {
         tool->Draw();
     }
 
-	if (videoOutRefreshed)
-        contextDirty = false;
 	SwapBuffers();
 }
 catch (const agi::Exception &err) {
@@ -306,8 +300,6 @@ void VideoDisplay::PositionVideo() {
 	if (tool)
 		tool->SetDisplayArea(viewport_left / scale_factor, viewport_top / scale_factor,
 		                     viewport_width / scale_factor, viewport_height / scale_factor);
-
-	Render();
 }
 
 void VideoDisplay::UpdateSize() {
@@ -336,8 +328,8 @@ void VideoDisplay::UpdateSize() {
 		GetGrandParent()->Layout();
 	}
 
-    sizeDirty = true;
 	PositionVideo();
+    Refresh();
 }
 
 void VideoDisplay::OnSizeEvent(wxSizeEvent &event) {
@@ -351,6 +343,7 @@ void VideoDisplay::OnSizeEvent(wxSizeEvent &event) {
 	else {
 		PositionVideo();
 	}
+    Refresh();
 }
 
 void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {
@@ -451,5 +444,7 @@ void VideoDisplay::Unload() {
 	videoOut.reset();
 	tool.reset();
 	glContext.reset();
-	pending_frame.reset();
+
+    pending_frame = nullptr;
+    last_frame_sid = -1;
 }

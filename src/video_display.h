@@ -70,10 +70,6 @@ class VideoDisplay final : public wxGLCanvas {
 	/// The size of the video in screen at the current zoom level, which may not
 	/// be the same as the actual client size of the display
 	wxSize videoSize;
-	/// We need to recreate wxGLContext every time the size changes
-	bool sizeDirty = false;
-	/// We need to recreate all textures when context recreates
-	bool contextDirty = false;
 
 	Vector2D last_mouse_pos, mouse_pos;
 
@@ -109,7 +105,9 @@ class VideoDisplay final : public wxGLCanvas {
 	bool freeSize;
 
 	/// Frame which will replace the currently visible frame on the next render
-	std::shared_ptr<VideoFrame> pending_frame;
+	VideoFrame* pending_frame = nullptr;
+    /// Serial ID of last uploaded frame.
+    int last_frame_sid = -1;
 
 	std::unique_ptr<RetinaHelper> retina_helper;
 	int scale_factor;
@@ -119,9 +117,6 @@ class VideoDisplay final : public wxGLCanvas {
 	/// @param horizontal_percent The percent of the video reserved horizontally
 	/// @param vertical_percent The percent of the video reserved vertically
 	void DrawOverscanMask(float horizontal_percent, float vertical_percent) const;
-
-	/// Upload the image for the current frame to the video card
-	void UploadFrameData(FrameReadyEvent&);
 
 	/// @brief Initialize the gl context and set the active context to this one
 	/// @return Could the context be set?
@@ -174,8 +169,15 @@ public:
 	/// Discard all OpenGL state
 	void Unload();
 
+    /// Is the coord in the area of display viewport?
+    /// @brief x The X coord(related to the left upper corner of the component)
+    /// @brief y The Y coord(related to the left upper corner of the component)
 	bool IsInArea(int x, int y) {
 	    return x >= viewport_left && y >= viewport_left
 	    && x <= viewport_left + viewport_width && y <= viewport_top + viewport_height;
 	}
+
+    /// Upload the image for the current frame to the video card
+    /// @brief frame The uploading frame.
+    void UploadFrameData(VideoFrame* frame);
 };
