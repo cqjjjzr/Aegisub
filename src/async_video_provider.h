@@ -82,7 +82,7 @@ class AsyncVideoProvider {
 	void ProcFrame(VideoFrame& outFrame, int frame, double time, bool raw = false);
 
 	/// Produce a frame if req_version is still the current version
-	void ProcAsync(VideoFrame& frame, uint_fast32_t req_version, bool check_updated);
+	void ProcAsync(VideoFrame* frame, uint_fast32_t req_version, bool check_updated);
 
 	/// Monotonic counter used to drop frames when changes arrive faster than
 	/// they can be rendered
@@ -107,7 +107,10 @@ public:
 	///
 	/// This function only supports changes to existing lines, and not
 	/// insertions or deletions.
-	void UpdateSubtitles(const AssFile *subs, const AssDialogue *changes) noexcept;
+	void UpdateSubtitles(const AssFile *subs, const AssDialogue *changes,
+	                     const std::function<VideoFrame*(void)> allocator,
+                         const std::function<void(VideoFrame*)> onComplete,
+                         const std::function<void(VideoFrame*)> onError) noexcept;
 
 	/// @brief Queue a request for a frame
 	/// @brief frame Frame number

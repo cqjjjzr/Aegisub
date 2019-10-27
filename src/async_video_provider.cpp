@@ -103,7 +103,10 @@ void AsyncVideoProvider::LoadSubtitles(const AssFile *new_subs) noexcept {
 	});
 }
 
-void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialogue *changed) noexcept {
+void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialogue *changed,
+                                         const std::function<VideoFrame*(void)> allocator,
+                                         const std::function<void(VideoFrame*)> onComplete,
+                                         const std::function<void(VideoFrame*)> onError) noexcept {
 	uint_fast32_t req_version = ++version;
 
 	// Copy just the line which were changed, then replace the line at the
@@ -118,6 +121,14 @@ void AsyncVideoProvider::UpdateSubtitles(const AssFile *new_subs, const AssDialo
 		delete &*it--;
 
 		single_frame = NEW_SUBS_FILE;
+        auto pFrame = allocator();
+        try {
+            ProcAsync(pFrame, req_version, true);
+            onComplete(pFrame);
+        } catch (...) {
+            onError(pFrame);
+            // TODO handle VideoProviderErrorEvent and SubtitleProviderErrorEvent
+        }
 	});
 }
 
@@ -127,7 +138,7 @@ void AsyncVideoProvider::RequestFrame(VideoFrame& frame, int new_frame, double n
 	worker->Async([&]{
 		time = new_time;
 		frame_number = new_frame;
-		ProcAsync(frame, req_version, false);
+		ProcAsync(&frame, req_version, false);
 	});
 }
 
@@ -144,7 +155,7 @@ void AsyncVideoProvider::RequestFrame(
         frame_number = frameNum;
         auto pFrame = allocator();
         try {
-            ProcAsync(*pFrame, req_version, false);
+            ProcAsync(pFrame, req_version, false);
             onComplete(pFrame);
         } catch (...) {
             onError(pFrame);
@@ -182,9 +193,8 @@ bool AsyncVideoProvider::NeedUpdate(std::vector<AssDialogueBase const*> const& v
 	return false;
 }
 
-void AsyncVideoProvider::ProcAsync(VideoFrame& frame, uint_fast32_t req_version, bool check_updated) {
-	// Only actually produce the frame if there's no queued changes waiting
-	if (req_version < version || frame_number < 0) return;
+void AsyncVideoProvider::ProcAsync(VideoFrame* frame, uint_fast32_t req_version, bool check_updated) {
+    if (frame_number < 0) return;
 
 	std::vector<AssDialogueBase const*> visible_lines;
 	for (auto const& line : subs->Events) {
@@ -198,10 +208,13 @@ void AsyncVideoProvider::ProcAsync(VideoFrame& frame, uint_fast32_t req_version,
 	last_lines.reserve(visible_lines.size());
 	for (auto line : visible_lines)
 		last_lines.push_back(*line);
+
+    // Only actually produce the frame if there's no queued changes waiting
+    if (req_version < version) return;
 	last_rendered = frame_number;
 
-    ProcFrame(frame, frame_number, time);
-    // TODO notify that the frame is ready
+	if (frame)
+        ProcFrame(*frame, frame_number, time);
 }
 
 void AsyncVideoProvider::GetFrame(VideoFrame& outFrame, int frame, double time, bool raw) {

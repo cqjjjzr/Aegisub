@@ -101,7 +101,7 @@ class VideoController final : public wxEvtHandler {
 	AspectRatio ar_type = AspectRatio::Default;
 
     /// Cache for rendering videos.
-	buffer_cache<VideoFrame> video_cache;
+	buffer_cache<VideoFrame> *video_cache;
 
 	/// Cached option for audio playing when frame stepping
 	const agi::OptionValue* playAudioOnStep;

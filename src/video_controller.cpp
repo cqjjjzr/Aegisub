@@ -52,7 +52,7 @@ VideoController::VideoController(agi::Context *c)
 	context->project->AddVideoProviderListener(&VideoController::OnNewVideoProvider, this),
 	context->selectionController->AddActiveLineListener(&VideoController::OnActiveLineChanged, this),
 }))
-, video_cache(new VideoFrame, new VideoFrame)
+, video_cache(new buffer_cache<VideoFrame>(new VideoFrame, new VideoFrame))
 {
 	Bind(EVT_VIDEO_ERROR, &VideoController::OnVideoError, this);
 	Bind(EVT_SUBTITLES_ERROR, &VideoController::OnSubtitlesError, this);
@@ -79,10 +79,11 @@ void VideoController::OnSubtitlesCommit(int type, const AssDialogue *changed) {
 
 	if (!changed)
 		provider->LoadSubtitles(context->ass.get());
-	else
-		provider->UpdateSubtitles(context->ass.get(), changed);
-    RequestFrame();
-	// _TODO Rerender video frame here
+	else {
+        auto allocate = [=]() -> VideoFrame * { return video_cache->get_buffer_to_write(); };
+        auto onComplete = [=](VideoFrame* buf) -> void { video_cache->release_write(buf); };
+        provider->UpdateSubtitles(context->ass.get(), changed, allocate, onComplete, onComplete);
+    }
 }
 
 void VideoController::OnActiveLineChanged(AssDialogue *line) {
@@ -94,8 +95,8 @@ void VideoController::OnActiveLineChanged(AssDialogue *line) {
 
 void VideoController::RequestFrame() {
 	context->ass->Properties.video_position = frame_n;
-    auto allocate = [&]() -> VideoFrame * { return video_cache.get_buffer_to_write(); };
-    auto onComplete = [&](VideoFrame* buf) -> void { video_cache.release_write(buf); };
+    auto allocate = [=]() -> VideoFrame * { return video_cache->get_buffer_to_write(); };
+    auto onComplete = [=](VideoFrame* buf) -> void { video_cache->release_write(buf); };
     provider->RequestFrame(allocate, frame_n, TimeAtFrame(frame_n), onComplete, onComplete);
 }
 

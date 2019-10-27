@@ -80,7 +80,9 @@ void VideoProviderCache::GetFrame(int n, VideoFrame &out) {
 	for (auto cur = cache.begin(); cur != cache.end(); ++cur) {
 		if (cur->frame_number == n) {
 			cache.splice(cache.begin(), cache, cur); // Move to front
+			auto newSerialId = out.serialId; // Don't override the serial id
 			out = cache.front().frame;
+			out.serialId = newSerialId;
 			return;
 		}
 

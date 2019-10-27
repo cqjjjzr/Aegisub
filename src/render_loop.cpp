@@ -27,12 +27,12 @@ void RenderLoop::StartLoop()
 void RenderLoop::Notify()
 {
     auto& cache = context->videoController->video_cache;
-    auto frame = cache.get_latest_buffer_to_read();
+    auto frame = cache->get_latest_buffer_to_read();
     auto display = context->videoDisplay;
 
     display->UploadFrameData(frame);
     display->Refresh();
     display->Update();
 
-    cache.release_read(frame);
+    cache->release_read(frame);
 }
