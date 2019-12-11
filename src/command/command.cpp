@@ -18,26 +18,29 @@
 #include "../format.h"
 
 #include <libaegisub/log.h>
+#include <libaegisub/plugin/registry.h>
 
 #include <wx/intl.h>
+#include <utility>
 
 namespace cmd {
-	static std::map<std::string, std::unique_ptr<Command>> cmd_map;
-	typedef std::map<std::string, std::unique_ptr<Command>>::iterator iterator;
+    static agi::registry<Command> commands;
+	typedef agi::registry<Command>::iterator iterator;
 
 	static iterator find_command(std::string const& name) {
-		auto it = cmd_map.find(name);
-		if (it == cmd_map.end())
+		auto it = commands.find_entry_iter(name);
+		if (it == commands.end())
 			throw CommandNotFound(agi::format(_("'%s' is not a valid command name"), name));
 		return it;
 	}
 
 	void reg(std::unique_ptr<Command> cmd) {
-		cmd_map[cmd->name()] = std::move(cmd);
+		auto scmd = std::shared_ptr<Command>(std::move(cmd));
+		commands.register_entry(scmd->name(), scmd);
 	}
 
 	void unreg(std::string const& name) {
-		cmd_map.erase(find_command(name));
+		commands.unregister_entry(name);
 	}
 
 	Command *get(std::string const& name) {
@@ -45,15 +48,14 @@ namespace cmd {
 	}
 
 	void call(std::string const& name, agi::Context*c) {
-		Command &cmd = *find_command(name)->second;
-		if (cmd.Validate(c))
-			cmd(c);
+		auto cmd = commands.find_entry(name);
+		if (cmd && cmd->Validate(c))
+			cmd->operator()(c);
 	}
 
 	std::vector<std::string> get_registered_commands() {
 		std::vector<std::string> ret;
-		ret.reserve(cmd_map.size());
-		for (auto const& it : cmd_map)
+		for (auto const& it : std::as_const(commands))
 			ret.push_back(it.first);
 		return ret;
 	}
@@ -95,6 +97,7 @@ namespace cmd {
 	}
 
 	void clear() {
-		cmd_map.clear();
+		for (auto& name : get_registered_commands())
+			commands.unregister_entry(name);
 	}
 }
