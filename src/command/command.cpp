@@ -16,6 +16,7 @@
 
 #include "../compat.h"
 #include "../format.h"
+#include "../autoreghook.h"
 
 #include <libaegisub/log.h>
 #include <libaegisub/plugin/registry.h>
@@ -33,6 +34,7 @@ namespace cmd {
 			throw CommandNotFound(agi::format(_("'%s' is not a valid command name"), name));
 		return it;
 	}
+
 
 	void reg(std::unique_ptr<Command> cmd) {
 		auto scmd = std::shared_ptr<Command>(std::move(cmd));
@@ -77,7 +79,6 @@ namespace cmd {
 	void init_tool();
 	void init_video();
 	void init_visual_tools();
-
 	void init_builtin_commands() {
 		LOG_D("command/init") << "Populating command map";
 		init_app();
@@ -95,6 +96,8 @@ namespace cmd {
 		init_video();
 		init_visual_tools();
 	}
+
+	START_HOOK_FUNC(commands, init_builtin_commands)
 
 	void clear() {
 		for (auto& name : get_registered_commands())

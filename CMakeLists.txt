@@ -175,6 +175,7 @@ add_executable(Aegisub WIN32
     src/video_slider.cpp
     src/visual_feature.cpp
     src/render_loop.cpp
+    src/autoreghook.cpp
 )
 
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub)

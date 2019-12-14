@@ -139,9 +139,6 @@ DEFINE_EXCEPTION(CommandNotFound, CommandError);
 		virtual ~Command() = default;
 	};
 
-	/// Init all builtin commands.
-	void init_builtin_commands();
-
 	/// Register a command.
 	/// @param cmd Command object to register.
 	void reg(std::unique_ptr<Command> cmd);

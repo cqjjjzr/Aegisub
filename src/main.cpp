@@ -55,6 +55,7 @@
 #include "utils.h"
 #include "value_event.h"
 #include "version.h"
+#include "autoreghook.h"
 
 #include <libaegisub/dispatch.h>
 #include <libaegisub/format_path.h>
@@ -161,7 +162,7 @@ bool AegisubApp::OnInit() {
 			OnExceptionInMainLoop();
 		}
 	});
-    
+
     StartupLog("Init resources");
     agi::resources::fs::Init("./resources"); // default path
 
@@ -230,7 +231,8 @@ bool AegisubApp::OnInit() {
 #endif
 
 	// Init commands.
-	cmd::init_builtin_commands();
+	reg::CallRegisteredFunctions();
+	//cmd::init_builtin_commands();
 
 	// Init hotkeys
 	hotkey::init();
