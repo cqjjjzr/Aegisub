@@ -35,6 +35,8 @@
 #pragma once
 
 #include <libaegisub/exception.h>
+#include <libaegisub/registry.h>
+#include <libaegisub/factory.h>
 
 #include <cstdint>
 #include <memory>
@@ -63,9 +65,12 @@ public:
 	virtual void SetEndPosition(int64_t pos)=0;
 };
 
-struct AudioPlayerFactory {
-	static std::vector<std::string> GetClasses();
-	static std::unique_ptr<AudioPlayer> GetAudioPlayer(agi::AudioProvider *provider, wxWindow *window);
+typedef agi::factory<AudioPlayer, std::function<std::unique_ptr<AudioPlayer>(agi::AudioProvider*, wxWindow*)>> AudioPlayerFactory;
+
+struct AudioPlayerManager {
+	static std::vector<std::string> GetNames();
+	static std::unique_ptr<AudioPlayer> Create(agi::AudioProvider *provider, wxWindow *window);
+	static agi::registry<AudioPlayerFactory>& GetRegistry();
 };
 
 DEFINE_EXCEPTION(AudioPlayerOpenError, agi::Exception);

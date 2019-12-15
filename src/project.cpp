@@ -246,7 +246,7 @@ void Project::DoLoadAudio(agi::fs::path const& path, bool quiet) {
 
 	try {
 		try {
-			audio_provider = GetAudioProvider(path, *context->path, progress);
+			audio_provider = AudioProviderManager::Create(path, *context->path, progress);
 		}
 		catch (agi::UserCancelException const&) { return; }
 		catch (...) {

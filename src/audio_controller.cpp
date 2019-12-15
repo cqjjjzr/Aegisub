@@ -99,7 +99,7 @@ void AudioController::OnAudioPlayerChanged()
 
 	try
 	{
-		player = AudioPlayerFactory::GetAudioPlayer(provider, context->parent);
+		player = AudioPlayerManager::Create(provider, context->parent);
 	}
 	catch (...)
 	{

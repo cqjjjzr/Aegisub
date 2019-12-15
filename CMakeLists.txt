@@ -190,17 +190,17 @@ if (MSVC)
     add_compile_options("/utf-8")
     add_compile_definitions("_UNICODE" "UNICODE")
 
-	target_compile_definitions(libaegisub PRIVATE NOMINMAX INITGUID)
-	target_compile_definitions(Aegisub PRIVATE NOMINMAX INITGUID)
+    target_compile_definitions(libaegisub PRIVATE NOMINMAX INITGUID)
+    target_compile_definitions(Aegisub PRIVATE NOMINMAX INITGUID)
     target_compile_options(Aegisub PRIVATE "/FI${PROJECT_SOURCE_DIR}/src/agi_pre.h" "-MP")
     target_link_libraries (Aegisub Usp10)
     #target_sources(Aegisub PRIVATE src/res/res.rc src/res/strings.rc src/crash_writer_minidump.cpp)
     target_sources(Aegisub PRIVATE
-		src/res/res.rc
-		src/res/strings.rc
-		src/generated/windows/resource.rc
-		src/crash_writer.cpp
-		src/dpi_aware.manifest)
+        src/res/res.rc
+        src/res/strings.rc
+        src/generated/windows/resource.rc
+        src/crash_writer.cpp
+        src/dpi_aware.manifest)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Aegisub)
 else()
     target_sources(Aegisub PRIVATE src/crash_writer.cpp)

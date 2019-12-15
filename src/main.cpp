@@ -163,8 +163,8 @@ bool AegisubApp::OnInit() {
 		}
 	});
 
-    StartupLog("Init resources");
-    agi::resources::fs::Init("./resources"); // default path
+	StartupLog("Init resources");
+	agi::resources::fs::Init("./resources"); // default path
 
 	config::path = new agi::Path;
 	crash_writer::Initialize(config::path->Decode("?user"));
@@ -206,9 +206,9 @@ bool AegisubApp::OnInit() {
 		auto stream = std::stringstream(GET_DEFAULT_CONFIG(default_config));
 		config::opt->ConfigNext(stream);
 	} catch (agi::Exception& e) {
-        wxMessageBox("Configuration file is invalid. Error reported:\n" + to_wx(e.GetMessage()), "Error");
+		wxMessageBox("Configuration file is invalid. Error reported:\n" + to_wx(e.GetMessage()), "Error");
 		LOG_E("config/init") << "Caught exception: " << e.GetMessage();
-        wxExit();
+		wxExit();
 	}
 
 	try {
@@ -495,15 +495,15 @@ void AegisubApp::OpenFiles(wxArrayStringsAdapter filenames) {
 
 void AegisubApp::OnInitCmdLine(wxCmdLineParser& parser)
 {
-    parser.SetDesc(agiCmdLineDesc);
-    // must refuse '/' as parameter starter or cannot use "/path" style paths
-    parser.SetSwitchChars(wxT("-"));
+	parser.SetDesc(agiCmdLineDesc);
+	// must refuse '/' as parameter starter or cannot use "/path" style paths
+	parser.SetSwitchChars(wxT("-"));
 }
 
 bool AegisubApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
-    wxString* resourcePath;
-    if (parser.Found("resource"), &resourcePath)
-        agi::resources::fs::Init(std::string_view(resourcePath->c_str(), resourcePath->length()));
-    return true;
+	wxString* resourcePath;
+	if (parser.Found("resource"), &resourcePath)
+		agi::resources::fs::Init(std::string_view(resourcePath->c_str(), resourcePath->length()));
+	return true;
 }

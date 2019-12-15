@@ -22,10 +22,9 @@
 
 namespace agi {
 
-template <typename T>
+template <typename T, typename list_type = std::unordered_map<std::string, std::shared_ptr<T>>>
 class registry
 {
-    using list_type = std::unordered_map<std::string, std::shared_ptr<T>>;
 private:
     list_type entries;
 public:
@@ -75,6 +74,24 @@ public:
     iterator find_entry_iter(std::string_view name)
     {
         return entries.find(std::string(name));
+    }
+
+    std::vector<std::string> get_entries_names()
+    {
+        auto ret = std::vector<std::string>();
+        for (auto& it : entries)
+            ret.push_back(it.first);
+        return ret;
+    }
+
+    bool empty()
+    {
+        return entries.begin() == entries.end();
+    }
+
+    bool size()
+    {
+        return entries.size();
     }
 };
 }

@@ -18,12 +18,19 @@
 
 #include "factory_manager.h"
 #include "options.h"
+#include "autoreghook.h"
 #include "utils.h"
 
 #include <libaegisub/audio/provider.h>
 #include <libaegisub/fs.h>
+#include <libaegisub/registry.h>
+#include <libaegisub/factory.h>
 #include <libaegisub/log.h>
 #include <libaegisub/path.h>
+
+#include <string>
+#include <vector>
+#include <set>
 
 #include <boost/range/iterator_range.hpp>
 
@@ -33,33 +40,23 @@ std::unique_ptr<AudioProvider> CreateAvisynthAudioProvider(fs::path const& filen
 std::unique_ptr<AudioProvider> CreateFFmpegSourceAudioProvider(fs::path const& filename, BackgroundRunner *);
 
 namespace {
-struct factory {
-	const char *name;
-	std::unique_ptr<AudioProvider> (*create)(fs::path const&, BackgroundRunner *);
-	bool hidden;
-};
-
-const factory providers[] = {
-	{"Dummy", CreateDummyAudioProvider, true},
-	{"PCM", CreatePCMAudioProvider, true},
-#ifdef WITH_FFMS2
-	{"FFmpegSource", CreateFFmpegSourceAudioProvider, false},
-#endif
-#ifdef WITH_AVISYNTH
-	{"Avisynth", CreateAvisynthAudioProvider, false},
-#endif
-};
+agi::registry<AudioProviderFactory> _registry;
 }
 
-std::vector<std::string> GetAudioProviderNames() {
-	return ::GetClasses(boost::make_iterator_range(std::begin(providers), std::end(providers)));
+std::vector<std::string> AudioProviderManager::GetNames()
+{
+	return _registry.get_entries_names();
 }
 
-std::unique_ptr<agi::AudioProvider> GetAudioProvider(fs::path const& filename,
-                                                     Path const& path_helper,
-                                                     BackgroundRunner *br) {
+std::unique_ptr<agi::AudioProvider> AudioProviderManager::Create(agi::fs::path const& filename,
+																 agi::Path const& path_helper,
+																 agi::BackgroundRunner* br)
+{
 	auto preferred = OPT_GET("Audio/Provider")->GetString();
-	auto sorted = GetSorted(boost::make_iterator_range(std::begin(providers), std::end(providers)), preferred);
+	auto sorted = std::set<AudioProviderFactory*, factory_comparator>(agi::factory_comparator{ preferred.c_str() });
+	for (auto& entry : _registry)
+		sorted.insert(entry.second.get());
+	//auto sorted = GetSorted(boost::make_iterator_range(std::begin(providers), std::end(providers)), preferred);
 
 	std::unique_ptr<AudioProvider> provider;
 	bool found_file = false;
@@ -126,3 +123,20 @@ std::unique_ptr<agi::AudioProvider> GetAudioProvider(fs::path const& filename,
 
 	throw InternalError("Invalid audio caching method");
 }
+
+agi::registry<AudioProviderFactory>& AudioProviderManager::GetRegistry()
+{
+	return _registry;
+}
+
+START_HOOK_BEGIN(audioProvider)
+#define DEFINE_AUDIO_PROVIDER(name, func, hidden) _registry.register_entry(#name, std::make_unique<AudioProviderFactory>(std::string(#name), func, hidden ))
+    DEFINE_AUDIO_PROVIDER(Dummy, CreateDummyAudioProvider, true);
+    DEFINE_AUDIO_PROVIDER(PCM, CreatePCMAudioProvider, true);
+#ifdef WITH_FFMS2
+    DEFINE_AUDIO_PROVIDER(FFmpegSource, CreateFFmpegSourceAudioProvider, false);
+#endif
+#ifdef WITH_AVISYNTH
+	DEFINE_AUDIO_PROVIDER(Avisynth, CreateAvisynthAudioProvider, false);
+#endif
+START_HOOK_END

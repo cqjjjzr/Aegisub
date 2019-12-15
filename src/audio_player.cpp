@@ -35,8 +35,8 @@
 #include "include/aegisub/audio_player.h"
 
 #include "audio_controller.h"
-#include "factory_manager.h"
 #include "options.h"
+#include "autoreghook.h"
 
 #include <boost/range/iterator_range.hpp>
 
@@ -60,49 +60,26 @@ std::unique_ptr<AudioPlayer> CreatePulseAudioPlayer(agi::AudioProvider *provider
 std::unique_ptr<AudioPlayer> CreateOSSPlayer(agi::AudioProvider *providers, wxWindow *window);
 #endif
 
-namespace {
-	struct factory {
-		const char *name;
-		std::unique_ptr<AudioPlayer> (*create)(agi::AudioProvider *, wxWindow *window);
-		bool hidden;
-	};
-
-	const factory factories[] = {
-#ifdef WITH_ALSA
-		{"ALSA", CreateAlsaPlayer, false},
-#endif
-#ifdef WITH_DIRECTSOUND
-		{"DirectSound-old", CreateDirectSoundPlayer, false},
-		{"DirectSound", CreateDirectSound2Player, false},
-#endif
-#ifdef WITH_OPENAL
-		{"OpenAL", CreateOpenALPlayer, false},
-#endif
-#ifdef WITH_PORTAUDIO
-		{"PortAudio", CreatePortAudioPlayer, false},
-#endif
-#ifdef WITH_LIBPULSE
-		{"PulseAudio", CreatePulseAudioPlayer, false},
-#endif
-#ifdef WITH_OSS
-		{"OSS", CreateOSSPlayer, false},
-#endif
-	};
+namespace
+{
+agi::registry<AudioPlayerFactory> _registry;
 }
 
-std::vector<std::string> AudioPlayerFactory::GetClasses() {
-	return ::GetClasses(boost::make_iterator_range(std::begin(factories), std::end(factories)));
+std::vector<std::string> AudioPlayerManager::GetNames() {
+	return _registry.get_entries_names();
 }
 
-std::unique_ptr<AudioPlayer> AudioPlayerFactory::GetAudioPlayer(agi::AudioProvider *provider, wxWindow *window) {
-	if (std::begin(factories) == std::end(factories))
+std::unique_ptr<AudioPlayer> AudioPlayerManager::Create(agi::AudioProvider *provider, wxWindow *window) {
+	if (_registry.empty())
 		throw AudioPlayerOpenError("No audio players are available.");
 
 	auto preferred = OPT_GET("Audio/Player")->GetString();
-	auto sorted = GetSorted(boost::make_iterator_range(std::begin(factories), std::end(factories)), preferred);
+	auto sorted = std::set<AudioPlayerFactory*, agi::factory_comparator>(agi::factory_comparator{ preferred.c_str() });
+	for (auto& entry : _registry)
+		sorted.insert(entry.second.get());
 
 	std::string error;
-	for (auto factory : sorted) {
+	for (auto& factory : sorted) {
 		try {
 			return factory->create(provider, window);
 		}
@@ -112,3 +89,32 @@ std::unique_ptr<AudioPlayer> AudioPlayerFactory::GetAudioPlayer(agi::AudioProvid
 	}
 	throw AudioPlayerOpenError(error);
 }
+
+agi::registry<AudioPlayerFactory>& AudioPlayerManager::GetRegistry()
+{
+	return _registry;
+}
+
+START_HOOK_BEGIN(audioPlayer)
+#define DEFINE_AUDIO_PLAYER(name, func) _registry.register_entry(#name, std::make_unique<AudioPlayerFactory>(std::string(#name), func, false ))
+
+#ifdef WITH_ALSA
+    DEFINE_AUDIO_PLAYER(ALSA, CreateAlsaPlayer);
+#endif
+#ifdef WITH_DIRECTSOUND
+    DEFINE_AUDIO_PLAYER(DirectSound-old, CreateDirectSoundPlayer);
+    DEFINE_AUDIO_PLAYER(DirectSound, CreateDirectSound2Player);
+#endif
+#ifdef WITH_OPENAL
+	DEFINE_AUDIO_PLAYER(OpenAL, CreateOpenALPlayer);
+#endif
+#ifdef WITH_PORTAUDIO
+	DEFINE_AUDIO_PLAYER(PortAudio, CreatePortAudioPlayer);
+#endif
+#ifdef WITH_LIBPULSE
+		DEFINE_AUDIO_PLAYER(PulseAudio, CreatePulseAudioPlayer);
+#endif
+#ifdef WITH_OSS
+		DEFINE_AUDIO_PLAYER(OSS, CreateOSSPlayer);
+#endif
+START_HOOK_END

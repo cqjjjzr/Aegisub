@@ -92,7 +92,7 @@ void General_DefaultStyles(wxTreebook *book, Preferences *parent) {
 	instructions->Wrap(400);
 	staticbox->Add(instructions, 0, wxALL, 5);
 	staticbox->AddSpacer(16);
-	
+
 	auto general = new wxFlexGridSizer(2, 5, 5);
 	general->AddGrowableCol(0, 1);
 	staticbox->Add(general, 1, wxEXPAND, 5);
@@ -365,10 +365,10 @@ void Advanced_Audio(wxTreebook *book, Preferences *parent) {
 
 	auto expert = p->PageSizer(_("Expert"));
 
-	wxArrayString ap_choice = to_wx(GetAudioProviderNames());
+	wxArrayString ap_choice = to_wx(AudioProviderManager::GetNames());
 	p->OptionChoice(expert, _("Audio provider"), ap_choice, "Audio/Provider");
 
-	wxArrayString apl_choice = to_wx(AudioPlayerFactory::GetClasses());
+	wxArrayString apl_choice = to_wx(AudioPlayerManager::GetNames());
 	p->OptionChoice(expert, _("Audio player"), apl_choice, "Audio/Player");
 
 	auto cache = p->PageSizer(_("Cache"));

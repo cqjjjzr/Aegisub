@@ -15,6 +15,8 @@
 // Aegisub Project http://www.aegisub.org/
 
 #include <libaegisub/fs_fwd.h>
+#include <libaegisub/registry.h>
+#include <libaegisub/factory.h>
 
 #include <memory>
 #include <vector>
@@ -25,7 +27,15 @@ namespace agi {
 	class Path;
 }
 
-std::unique_ptr<agi::AudioProvider> GetAudioProvider(agi::fs::path const& filename,
-                                                     agi::Path const& path_helper,
-                                                     agi::BackgroundRunner *br);
-std::vector<std::string> GetAudioProviderNames();
+typedef agi::factory<agi::AudioProvider,
+    std::function<std::unique_ptr<agi::AudioProvider>(agi::fs::path const&, agi::BackgroundRunner*)>
+>
+AudioProviderFactory;
+
+struct AudioProviderManager {
+	static std::vector<std::string> GetNames();
+	static std::unique_ptr<agi::AudioProvider> Create(agi::fs::path const& filename,
+																agi::Path const& path_helper,
+																agi::BackgroundRunner* br);
+	static agi::registry<AudioProviderFactory>& GetRegistry();
+};

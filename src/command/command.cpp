@@ -19,7 +19,7 @@
 #include "../autoreghook.h"
 
 #include <libaegisub/log.h>
-#include <libaegisub/plugin/registry.h>
+#include <libaegisub/registry.h>
 
 #include <wx/intl.h>
 #include <utility>
