@@ -30,7 +30,7 @@ jobs:
     - name : Clone CMake dependencies resolving script
       uses : actions/checkout@v2
       with : 
-        repository: Aegisub-Conan-CMake
+        repository: cqjjjzr/Aegisub-Conan-CMake
         path: Aegisub-Conan-CMake
     - name: Cache
       id: cache-aegisub
