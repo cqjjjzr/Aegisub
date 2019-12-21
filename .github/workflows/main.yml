@@ -5,7 +5,6 @@ on: [push]
 jobs:
   build_linux:
     runs-on: ubuntu-18.04
-
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
@@ -30,7 +29,7 @@ jobs:
         sudo luarocks install uuid > /dev/null
     - name : Clone CMake dependencies resolving script
       uses : actions/checkout@v2
-      with : 
+      with :
         repository: cqjjjzr/Aegisub-Conan-CMake
         path: Aegisub-Conan-CMake
     - name: Cache
@@ -53,6 +52,40 @@ jobs:
       run: |
         make -j2
         make test-aegisub -j2
+    - name : Test
+      working-directory : build-dir
+      run: |
+        ctest --output-on-failure .
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.8' # Version range or exact version of a Python version to use, using semvers version range syntax.
+        architecture: 'x64' # (x64 or x86)
+    - name : Install Conan
+      run: pip install conan
+    - name: Cache
+      id: cache-aegisub
+      uses: actions/cache@v1
+      with:
+        path: ~/.conan
+        key: ${{ runner.os }}-conan
+    - name: Resolving dependencies and configuring CMake
+      run: |
+        conan user
+        cd tests
+        cmd setup.bat
+        cd ..
+        mkdir build-dir
+        cd build-dir
+        cmake -DCMAKE_CXX_FLAGS='-Wall -Wextra -Wno-unused-parameter -pedantic' -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=OFF -DWITH_CSRI=ON -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="./Aegisub-Conan-CMake/dependencies_conan.cmake" ..
+    - name : Build
+      working-directory : build-dir
+      run: |
+        cmake --build . -j 2
+        cmake --build . -t test-aegisub -j 2
     - name : Test
       working-directory : build-dir
       run: |
