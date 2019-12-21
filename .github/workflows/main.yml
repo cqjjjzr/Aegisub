@@ -73,6 +73,7 @@ jobs:
         path: ~/.conan
         key: ${{ runner.os }}-conan
     - name: Resolving dependencies and configuring CMake
+      shell: cmd
       run: |
         conan user
         cd tests
