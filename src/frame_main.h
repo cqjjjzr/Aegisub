@@ -30,6 +30,7 @@
 #include <memory>
 #include <wx/frame.h>
 #include <wx/timer.h>
+#include <wx/aui/aui.h>
 
 class AegisubApp;
 class AsyncVideoProvider;
@@ -59,6 +60,7 @@ class FrameMain : public wxFrame {
 
 	void OnKeyDown(wxKeyEvent &event);
 	void OnMouseWheel(wxMouseEvent &evt);
+	void OnPaneClose(wxAuiManagerEvent& evt);
 
 	void OnStatusClear(wxTimerEvent &event);
 	void OnCloseWindow (wxCloseEvent &event);
@@ -76,6 +78,8 @@ class FrameMain : public wxFrame {
 	wxSizer *MainSizer;  ///< Arranges things from top to bottom in the window
 	wxSizer *TopSizer;   ///< Arranges video box and tool box from left to right
 	wxSizer *ToolsSizer; ///< Arranges audio and editing areas top to bottom
+
+	wxAuiManager auiManager;
 
 public:
 	FrameMain();

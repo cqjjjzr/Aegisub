@@ -18,35 +18,9 @@
 
 #include "include/aegisub/toolbar.h"
 
-#include "command/command.h"
-#include "compat.h"
-#include "include/aegisub/hotkey.h"
-#include "libaegisub/resources.h"
-#include "options.h"
-#include "retina_helper.h"
-
-#include <libaegisub/hotkey.h>
-#include <libaegisub/json.h>
-#include <libaegisub/log.h>
-#include <libaegisub/signal.h>
-
-#include <boost/algorithm/string/join.hpp>
-#include <sstream>
-#include <vector>
-
-#include <wx/frame.h>
-#include <wx/toolbar.h>
+#include "toolbar_utils.h"
 
 namespace {
-	json::Object const& get_root() {
-		static json::Object root;
-		if (root.empty()) {
-			auto stream = std::stringstream(GET_DEFAULT_CONFIG(default_toolbar));
-			root = std::move(static_cast<json::Object&>(agi::json_util::parse(stream)));
-		}
-		return root;
-	}
-
 	class Toolbar final : public wxToolBar {
 		/// Window ID of first toolbar control
 		static const int TOOL_ID_BASE = 5000;
@@ -97,64 +71,11 @@ namespace {
 			Unbind(wxEVT_IDLE, &Toolbar::OnIdle, this);
 			ClearTools();
 			commands.clear();
-			Populate();
+			toolbar::Populate(this, name, commands, context, icon_size, TOOL_ID_BASE, &Toolbar::OnIdle);
 		}
 
-		/// Populate the toolbar with buttons
-		void Populate() {
-			json::Object const& root = get_root();
-			auto root_it = root.find(name);
-			if (root_it == root.end()) {
-				// Toolbar names are all hardcoded so this should never happen
-				throw agi::InternalError("Toolbar named " + name + " not found.");
-			}
-
-			json::Array const& arr = root_it->second;
-			commands.reserve(arr.size());
-			bool needs_onidle = false;
-			bool last_was_sep = false;
-
-			for (json::String const& command_name : arr) {
-				if (command_name.empty()) {
-					if (!last_was_sep)
-						AddSeparator();
-					last_was_sep = true;
-					continue;
-				}
-
-				cmd::Command *command;
-				try {
-					command = cmd::get(command_name);
-				}
-				catch (cmd::CommandNotFound const&) {
-					LOG_W("toolbar/command/not_found") << "Command '" << command_name << "' not found; skipping";
-					continue;
-				}
-
-				last_was_sep = false;
-
-				int flags = command->Type();
-				wxItemKind kind =
-					flags & cmd::COMMAND_RADIO ? wxITEM_RADIO :
-					flags & cmd::COMMAND_TOGGLE ? wxITEM_CHECK :
-					wxITEM_NORMAL;
-
-				wxBitmap const& bitmap = command->Icon(icon_size, GetLayoutDirection());
-				AddTool(TOOL_ID_BASE + commands.size(), command->StrDisplay(context), bitmap, GetTooltip(command), kind);
-
-				commands.push_back(command);
-				needs_onidle = needs_onidle || flags != cmd::COMMAND_NORMAL;
-			}
-
-			// Only bind the update function if there are actually any dynamic tools
-			if (needs_onidle) {
-				Bind(wxEVT_IDLE, &Toolbar::OnIdle, this);
-			}
-
-			Realize();
-		}
-
-		wxString GetTooltip(cmd::Command *command) {
+	public:
+		wxString GetTooltip(cmd::Command* command) {
 			wxString ret = command->StrHelp();
 
 			std::vector<std::string> hotkeys = hotkey::get_hotkey_strs(ht_context, command->name());
@@ -164,7 +85,6 @@ namespace {
 			return ret;
 		}
 
-	public:
 		Toolbar(wxWindow *parent, std::string name, agi::Context *c, std::string ht_context, bool vertical, bool text = false)
 		: wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, (text ? wxTB_TEXT : 0) | wxTB_NODIVIDER | wxTB_FLAT | (vertical ? wxTB_VERTICAL : wxTB_HORIZONTAL))
 		, name(std::move(name))
@@ -175,44 +95,13 @@ namespace {
 		, icon_size_slot(OPT_SUB("App/Toolbar Icon Size", &Toolbar::OnIconSizeChange, this))
 		, hotkeys_changed_slot(hotkey::inst->AddHotkeyChangeListener(&Toolbar::RegenerateToolbar, this))
 		{
-			Populate();
-			Bind(wxEVT_TOOL, &Toolbar::OnClick, this);
-		}
-
-		Toolbar(wxFrame *parent, std::string name, agi::Context *c, std::string ht_context)
-#ifdef __WXMAC__
-		: wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, wxTB_FLAT | wxTB_HORIZONTAL)
-#else
-        : wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, wxTB_FLAT | wxTB_HORIZONTAL)
-#endif
-		, name(std::move(name))
-		, context(c)
-		, ht_context(std::move(ht_context))
-		, retina_helper(parent)
-#ifndef __WXMAC__
-		, icon_size(OPT_GET("App/Toolbar Icon Size")->GetInt())
-		, icon_size_slot(OPT_SUB("App/Toolbar Icon Size", &Toolbar::OnIconSizeChange, this))
-#else
-		, icon_size(32 * retina_helper.GetScaleFactor())
-		, icon_size_slot(retina_helper.AddScaleFactorListener([=](double scale) {
-			icon_size = 32 * retina_helper.GetScaleFactor();
-			RegenerateToolbar();
-		}))
-#endif
-		, hotkeys_changed_slot(hotkey::inst->AddHotkeyChangeListener(&Toolbar::RegenerateToolbar, this))
-		{
-			parent->SetToolBar(this);
-			Populate();
+			toolbar::Populate(this, this->name, commands, context, icon_size, TOOL_ID_BASE, &Toolbar::OnIdle);
 			Bind(wxEVT_TOOL, &Toolbar::OnClick, this);
 		}
 	};
 }
 
 namespace toolbar {
-	void AttachToolbar(wxFrame *frame, std::string const& name, agi::Context *c, std::string const& hotkey) {
-		new Toolbar(frame, name, c, hotkey);
-	}
-
 	wxToolBar *GetToolbar(wxWindow *parent, std::string const& name, agi::Context *c, std::string const& hotkey, bool vertical) {
 		return new Toolbar(parent, name, c, hotkey, vertical);
 	}

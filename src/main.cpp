@@ -230,7 +230,7 @@ bool AegisubApp::OnInit() {
 	}
 #endif
 
-	// Init commands.
+	// Init registries.
 	reg::CallRegisteredFunctions();
 	//cmd::init_builtin_commands();
 

@@ -176,6 +176,8 @@ add_executable(Aegisub WIN32
     src/visual_feature.cpp
     src/render_loop.cpp
     src/autoreghook.cpp
+    #src/auidemo.cpp
+    src/main_toolbar.cpp
 )
 
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub)

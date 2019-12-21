@@ -50,6 +50,7 @@
 #include "libaegisub/resources.h"
 #include "main.h"
 #include "options.h"
+#include "main_toolbar.h"
 #include "project.h"
 #include "subs_controller.h"
 #include "subs_edit_box.h"
@@ -122,6 +123,10 @@ FrameMain::FrameMain()
 	StartupLog("Apply saved Maximized state");
 	if (OPT_GET("App/Maximized")->GetBool()) Maximize(true);
 
+	StartupLog("Initialize dockable frame manager");
+	auiManager.SetManagedWindow(this);
+	Bind(wxEVT_AUI_PANE_CLOSE, &FrameMain::OnPaneClose, this);
+
 	StartupLog("Initialize toolbar");
 	wxSystemOptions::SetOption("msw.remap", 0);
 	OPT_SUB("App/Show Toolbar", &FrameMain::EnableToolBar, this);
@@ -165,20 +170,14 @@ FrameMain::~FrameMain () {
 	context->project->CloseVideo();
 
 	DestroyChildren();
+	auiManager.UnInit();
 }
 
 void FrameMain::EnableToolBar(agi::OptionValue const& opt) {
-	if (opt.GetBool()) {
-		if (!GetToolBar()) {
-			toolbar::AttachToolbar(this, "main", context.get(), "Default");
-			GetToolBar()->Realize();
-		}
-	}
-	else if (wxToolBar *old_tb = GetToolBar()) {
-		SetToolBar(nullptr);
-		delete old_tb;
-		Layout();
-	}
+	if (opt.GetBool())
+		toolbar::AttachMainToolbar(this, &auiManager, "main", context.get(), "Default");
+	else
+		toolbar::HideMainToolbar(&auiManager);
 }
 
 void FrameMain::InitContents() {
@@ -210,9 +209,18 @@ void FrameMain::InitContents() {
 	MainSizer->Add(context->subsGrid,1,wxEXPAND | wxALL,0);
 	Panel->SetSizer(MainSizer);
 
+	auiManager.AddPane(Panel, wxAuiPaneInfo().Name("Main").Caption("Main Window").CenterPane());
+
 	StartupLog("Perform layout");
+	auiManager.Update();
 	Layout();
 	StartupLog("Leaving InitContents");
+}
+
+void FrameMain::OnPaneClose(wxAuiManagerEvent& evt)
+{
+	if (evt.GetPane()->name == "MainToolbar")
+		OPT_SET("App/Show Toolbar")->SetBool(false);
 }
 
 void FrameMain::SetDisplayMode(int video, int audio) {
