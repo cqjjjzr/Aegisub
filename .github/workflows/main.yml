@@ -14,11 +14,11 @@ jobs:
         architecture: 'x64' # (x64 or x86)
     - name: Initialize required apt packages
       run: |
-        sudo apt remove cmake
+        sudo apt-get remove cmake
         sudo add-apt-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-        sudo apt-key adv --fetch-keys https://apt.kitware.com/keys/kitware-archive-latest.asc
-        sudo apt update
-        sudo apt install libasound2-dev luarocks cmake autopoint libjack-dev libgtk2.0-dev mesa-common-dev libgl1-mesa-dev libpulse-dev libva-dev libvdpau-dev libxcb1-dev libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+        wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+        sudo apt-get update
+        sudo apt-get install libasound2-dev luarocks cmake autopoint libjack-dev libgtk2.0-dev mesa-common-dev libgl1-mesa-dev libpulse-dev libva-dev libvdpau-dev libxcb1-dev libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
     - name : Install Conan
       run: pip install conan
     - name : Install required luarock packages
