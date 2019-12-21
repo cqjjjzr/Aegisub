@@ -66,6 +66,11 @@ jobs:
         architecture: 'x64' # (x64 or x86)
     - name : Install Conan
       run: pip install conan
+    - name : Clone CMake dependencies resolving script
+      uses : actions/checkout@v2
+      with :
+        repository: cqjjjzr/Aegisub-Conan-CMake
+        path: Aegisub-Conan-CMake
     - name: Cache
       id: cache-aegisub
       uses: actions/cache@v1
@@ -82,7 +87,7 @@ jobs:
         mkdir build-dir
         cd build-dir
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        cmake -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=OFF -DWITH_CSRI=ON -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="../Aegisub-Conan-CMake/dependencies_conan.cmake" ..
+        cmake -DCMAKE_BUILD_TYPE='Release' -DCMAKE_C_FLAGS='-Wall' -DWITH_STARTUPLOG=OFF -DWITH_CSRI=ON -DWITH_TEST=ON -DDEPENDENCIES_CMAKE_FILE="./Aegisub-Conan-CMake/dependencies_conan.cmake" ..
     - name : Build
       working-directory : build-dir
       run: |
