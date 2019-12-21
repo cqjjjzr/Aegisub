@@ -15,8 +15,9 @@ jobs:
     - name: Initialize required apt packages
       run: |
         sudo apt-get remove cmake
+        sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget
         sudo add-apt-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-        wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
         sudo apt-get update
         sudo apt-get install libasound2-dev luarocks cmake autopoint libjack-dev libgtk2.0-dev mesa-common-dev libgl1-mesa-dev libpulse-dev libva-dev libvdpau-dev libxcb1-dev libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
     - name : Install Conan
