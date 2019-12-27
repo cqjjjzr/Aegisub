@@ -38,6 +38,9 @@
 #include <string>
 #include <vector>
 
+#include <libaegisub/registry.h>
+#include <libaegisub/factory.h>
+
 class AssFile;
 struct VideoFrame;
 
@@ -54,7 +57,13 @@ public:
 
 namespace agi { class BackgroundRunner; }
 
-struct SubtitlesProviderFactory {
-	static std::unique_ptr<SubtitlesProvider> GetProvider(agi::BackgroundRunner *br);
-	static std::vector<std::string> GetClasses();
+namespace subtitles_provider {
+typedef agi::factory<SubtitlesProvider,
+	std::function<std::unique_ptr<SubtitlesProvider>(agi::BackgroundRunner * br)>
+>
+Factory;
+
+std::unique_ptr<SubtitlesProvider> GetProvider(agi::BackgroundRunner *br);
+std::vector<std::string> GetClasses();
+agi::registry<Factory> GetRegistry();
 };

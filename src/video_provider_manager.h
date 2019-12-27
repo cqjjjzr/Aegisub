@@ -20,10 +20,18 @@
 #include <string>
 #include <vector>
 
+#include <libaegisub/registry.h>
+#include <libaegisub/factory.h>
+
 class VideoProvider;
 namespace agi { class BackgroundRunner; }
 
-struct VideoProviderFactory {
-	static std::vector<std::string> GetClasses();
-	static std::unique_ptr<VideoProvider> GetProvider(agi::fs::path const& video_file, std::string const& colormatrix, agi::BackgroundRunner *br);
+namespace video_provider {
+typedef agi::factory<VideoProvider,
+	std::function<std::unique_ptr<VideoProvider>(agi::fs::path const&, std::string const&, agi::BackgroundRunner*)>
+> Factory;
+
+std::vector<std::string> GetClasses();
+std::unique_ptr<VideoProvider> GetProvider(agi::fs::path const& video_file, std::string const& colormatrix, agi::BackgroundRunner *br);
+agi::registry<Factory>& GetRegistry();
 };

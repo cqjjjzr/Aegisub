@@ -224,7 +224,7 @@ struct video_cycle_subtitles_provider final : public cmd::Command {
 	STR_HELP("Cycle through the available subtitles providers")
 
 	void operator()(agi::Context *c) override {
-		auto providers = SubtitlesProviderFactory::GetClasses();
+		auto providers = subtitles_provider::GetClasses();
 		if (providers.empty()) return;
 
 		auto it = find(begin(providers), end(providers), OPT_GET("Subtitle/Provider")->GetString());

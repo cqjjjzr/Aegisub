@@ -25,39 +25,25 @@
 #include "options.h"
 #include "subtitles_provider_csri.h"
 #include "subtitles_provider_libass.h"
+#include "autoreghook.h"
 
-namespace {
-	struct factory {
-		std::string name;
-		std::string subtype;
-		std::unique_ptr<SubtitlesProvider> (*create)(std::string const& subtype, agi::BackgroundRunner *br);
-		bool hidden;
-	};
+namespace subtitles_provider {
+agi::registry<Factory> _registry;
 
-	std::vector<factory> const& factories() {
-		static std::vector<factory> factories;
-		if (factories.size()) return factories;
-#ifdef WITH_CSRI
-		for (auto const& subtype : csri::List())
-			factories.push_back(factory{"CSRI/" + subtype, subtype, csri::Create, false});
-#endif
-		factories.push_back(factory{"libass", "", libass::Create, false});
-		return factories;
-	}
+std::vector<std::string> GetClasses() {
+	return _registry.get_entries_names();
 }
 
-std::vector<std::string> SubtitlesProviderFactory::GetClasses() {
-	return ::GetClasses(factories());
-}
-
-std::unique_ptr<SubtitlesProvider> SubtitlesProviderFactory::GetProvider(agi::BackgroundRunner *br) {
+std::unique_ptr<SubtitlesProvider> GetProvider(agi::BackgroundRunner* br) {
 	auto preferred = OPT_GET("Subtitle/Provider")->GetString();
-	auto sorted = GetSorted(factories(), preferred);
+	auto sorted = std::set<Factory*, agi::factory_comparator>(agi::factory_comparator{ preferred.c_str() });
+	for (auto& entry : _registry)
+		sorted.insert(entry.second.get());
 
 	std::string error;
 	for (auto factory : sorted) {
 		try {
-			auto provider = factory->create(factory->subtype, br);
+			auto provider = factory->create(br);
 			if (provider) return provider;
 		}
 		catch (agi::UserCancelException const&) { throw; }
@@ -68,10 +54,34 @@ std::unique_ptr<SubtitlesProvider> SubtitlesProviderFactory::GetProvider(agi::Ba
 	throw error;
 }
 
-void SubtitlesProvider::LoadSubtitles(AssFile *subs, int time) {
+/*std::vector<factory> const& factories() {
+	static std::vector<factory> factories;
+	if (factories.size()) return factories;
+#ifdef WITH_CSRI
+		for (auto const& subtype : csri::List())
+			factories.push_back(factory{"CSRI/" + subtype, subtype, csri::Create, false});
+#endif
+		factories.push_back(factory{"libass", "", libass::Create, false});
+		return factories;
+	}*/
+START_HOOK_BEGIN(subtitlesProvider)
+#define DEFINE_SUBTITLES_PROVIDER(name, func, hidden) _registry.register_entry(#name, std::make_unique<Factory>(std::string(#name), func, hidden ))
+#ifdef WITH_CSRI
+for (auto const& subtype : csri::List())
+_registry.register_entry(
+	"CSRI/" + subtype,
+	std::make_unique<Factory>(
+		    std::string("CSRI/" + subtype),
+		    [&](agi::BackgroundRunner* br) -> std::unique_ptr<SubtitlesProvider> { return libass::Create(subtype, br); }, false));
+#endif
+DEFINE_SUBTITLES_PROVIDER(libass, [&](agi::BackgroundRunner* br) -> std::unique_ptr<SubtitlesProvider> { return libass::Create("", br); }, false);
+START_HOOK_END
+}
+
+void SubtitlesProvider::LoadSubtitles(AssFile* subs, int time) {
 	buffer.clear();
 
-	auto push_header = [&](const char *str) {
+	auto push_header = [&](const char* str) {
 		buffer.insert(buffer.end(), str, str + strlen(str));
 	};
 	auto push_line = [&](std::string const& str) {
@@ -88,7 +98,7 @@ void SubtitlesProvider::LoadSubtitles(AssFile *subs, int time) {
 		push_line(line.GetEntryData());
 
 	if (!subs->Attachments.empty()) {
-		// TODO: some scripts may have a lot of attachments, 
+		// TODO: some scripts may have a lot of attachments,
 		// so ideally we'd want to write only those actually used on the requested video frame,
 		// but this would require some pre-parsing of the attached font files with FreeType,
 		// which isn't probably trivial.

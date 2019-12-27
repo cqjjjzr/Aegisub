@@ -62,6 +62,12 @@ namespace cmd {
 		return ret;
 	}
 
+	agi::registry<Command>& GetRegistry()
+	{
+		return commands;
+	}
+
+
 	// These forward declarations exist here since we don't want to expose
 	// them in a header, they're strictly internal-use.
 	void init_app();

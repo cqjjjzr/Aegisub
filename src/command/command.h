@@ -25,6 +25,7 @@
 #include <wx/string.h>
 
 #include <libaegisub/exception.h>
+#include <libaegisub/registry.h>
 
 namespace agi { struct Context; }
 
@@ -158,6 +159,9 @@ DEFINE_EXCEPTION(CommandNotFound, CommandError);
 
 	/// Get a list of registered command names
 	std::vector<std::string> get_registered_commands();
+
+	/// Get the command registry.
+	agi::registry<Command>& GetRegistry();
 
 	/// Unregister and deletes all commands
 	void clear();

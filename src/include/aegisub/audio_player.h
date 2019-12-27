@@ -65,12 +65,12 @@ public:
 	virtual void SetEndPosition(int64_t pos)=0;
 };
 
-typedef agi::factory<AudioPlayer, std::function<std::unique_ptr<AudioPlayer>(agi::AudioProvider*, wxWindow*)>> AudioPlayerFactory;
+namespace audio_player {
+typedef agi::factory<AudioPlayer, std::function<std::unique_ptr<AudioPlayer>(agi::AudioProvider*, wxWindow*)>> Factory;
 
-struct AudioPlayerManager {
-	static std::vector<std::string> GetNames();
-	static std::unique_ptr<AudioPlayer> Create(agi::AudioProvider *provider, wxWindow *window);
-	static agi::registry<AudioPlayerFactory>& GetRegistry();
+std::vector<std::string> GetNames();
+std::unique_ptr<AudioPlayer> Create(agi::AudioProvider *provider, wxWindow *window);
+agi::registry<Factory>& GetRegistry();
 };
 
 DEFINE_EXCEPTION(AudioPlayerOpenError, agi::Exception);

@@ -27,15 +27,15 @@ namespace agi {
 	class Path;
 }
 
+namespace audio_provider {
 typedef agi::factory<agi::AudioProvider,
-    std::function<std::unique_ptr<agi::AudioProvider>(agi::fs::path const&, agi::BackgroundRunner*)>
+	std::function<std::unique_ptr<agi::AudioProvider>(agi::fs::path const&, agi::BackgroundRunner*)>
 >
-AudioProviderFactory;
+Factory;
 
-struct AudioProviderManager {
-	static std::vector<std::string> GetNames();
-	static std::unique_ptr<agi::AudioProvider> Create(agi::fs::path const& filename,
-																agi::Path const& path_helper,
-																agi::BackgroundRunner* br);
-	static agi::registry<AudioProviderFactory>& GetRegistry();
+std::vector<std::string> GetNames();
+std::unique_ptr<agi::AudioProvider> Create(agi::fs::path const& filename,
+													agi::Path const& path_helper,
+													agi::BackgroundRunner* br);
+agi::registry<Factory>& GetRegistry();
 };

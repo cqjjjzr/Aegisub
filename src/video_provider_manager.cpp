@@ -16,14 +16,12 @@
 
 #include "video_provider_manager.h"
 
-#include "factory_manager.h"
+#include "autoreghook.h"
 #include "include/aegisub/video_provider.h"
 #include "options.h"
 
 #include <libaegisub/fs.h>
 #include <libaegisub/log.h>
-
-#include <boost/range/iterator_range.hpp>
 
 std::unique_ptr<VideoProvider> CreateDummyVideoProvider(agi::fs::path const&, std::string const&, agi::BackgroundRunner *);
 std::unique_ptr<VideoProvider> CreateYUV4MPEGVideoProvider(agi::fs::path const&, std::string const&, agi::BackgroundRunner *);
@@ -32,32 +30,18 @@ std::unique_ptr<VideoProvider> CreateAvisynthVideoProvider(agi::fs::path const&,
 
 std::unique_ptr<VideoProvider> CreateCacheVideoProvider(std::unique_ptr<VideoProvider>);
 
-namespace {
-	struct factory {
-		const char *name;
-		std::unique_ptr<VideoProvider> (*create)(agi::fs::path const&, std::string const&, agi::BackgroundRunner *);
-		bool hidden;
-	};
+namespace video_provider {
+agi::registry<Factory> _registry;
 
-	const factory providers[] = {
-		{"Dummy", CreateDummyVideoProvider, true},
-		{"YUV4MPEG", CreateYUV4MPEGVideoProvider, true},
-#ifdef WITH_FFMS2
-		{"FFmpegSource", CreateFFmpegSourceVideoProvider, false},
-#endif
-#ifdef WITH_AVISYNTH
-		{"Avisynth", CreateAvisynthVideoProvider, false},
-#endif
-	};
+std::vector<std::string> GetClasses() {
+	return _registry.get_entries_names();
 }
 
-std::vector<std::string> VideoProviderFactory::GetClasses() {
-	return ::GetClasses(boost::make_iterator_range(std::begin(providers), std::end(providers)));
-}
-
-std::unique_ptr<VideoProvider> VideoProviderFactory::GetProvider(agi::fs::path const& filename, std::string const& colormatrix, agi::BackgroundRunner *br) {
+std::unique_ptr<VideoProvider> GetProvider(agi::fs::path const& filename, std::string const& colormatrix, agi::BackgroundRunner* br) {
 	auto preferred = OPT_GET("Video/Provider")->GetString();
-	auto sorted = GetSorted(boost::make_iterator_range(std::begin(providers), std::end(providers)), preferred);
+	auto sorted = std::set<Factory*, agi::factory_comparator>(agi::factory_comparator{ preferred.c_str() });
+	for (auto& entry : _registry)
+		sorted.insert(entry.second.get());
 
 	bool found = false;
 	bool supported = false;
@@ -101,4 +85,22 @@ std::unique_ptr<VideoProvider> VideoProviderFactory::GetProvider(agi::fs::path c
 	if (!found) throw agi::fs::FileNotFound(filename.string());
 	if (!supported) throw VideoNotSupported(msg);
 	throw VideoOpenError(msg);
+}
+
+agi::registry<Factory>& GetRegistry()
+{
+	return _registry;
+}
+
+START_HOOK_BEGIN(videoProvider)
+#define DEFINE_VIDEO_PROVIDER(name, func, hidden) _registry.register_entry(#name, std::make_unique<Factory>(std::string(#name), func, hidden ))
+DEFINE_VIDEO_PROVIDER(Dummy, CreateDummyVideoProvider, true);
+DEFINE_VIDEO_PROVIDER(YUV4MPEG, CreateYUV4MPEGVideoProvider, true);
+#ifdef WITH_FFMS2
+DEFINE_VIDEO_PROVIDER(FFmpegSource, CreateFFmpegSourceVideoProvider, false);
+#endif
+#ifdef WITH_AVISYNTH
+DEFINE_AUDIO_PROVIDER(Avisynth, CreateAvisynthVideoProvider, false);
+#endif
+START_HOOK_END
 }

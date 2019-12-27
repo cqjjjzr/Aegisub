@@ -39,24 +39,22 @@ using namespace agi;
 std::unique_ptr<AudioProvider> CreateAvisynthAudioProvider(fs::path const& filename, BackgroundRunner *);
 std::unique_ptr<AudioProvider> CreateFFmpegSourceAudioProvider(fs::path const& filename, BackgroundRunner *);
 
-namespace {
-agi::registry<AudioProviderFactory> _registry;
-}
+namespace audio_provider {
+agi::registry<Factory> _registry;
 
-std::vector<std::string> AudioProviderManager::GetNames()
+std::vector<std::string> GetNames()
 {
 	return _registry.get_entries_names();
 }
 
-std::unique_ptr<agi::AudioProvider> AudioProviderManager::Create(agi::fs::path const& filename,
+std::unique_ptr<agi::AudioProvider> Create(agi::fs::path const& filename,
 																 agi::Path const& path_helper,
 																 agi::BackgroundRunner* br)
 {
 	auto preferred = OPT_GET("Audio/Provider")->GetString();
-	auto sorted = std::set<AudioProviderFactory*, factory_comparator>(agi::factory_comparator{ preferred.c_str() });
+	auto sorted = std::set<Factory*, factory_comparator>(agi::factory_comparator{ preferred.c_str() });
 	for (auto& entry : _registry)
 		sorted.insert(entry.second.get());
-	//auto sorted = GetSorted(boost::make_iterator_range(std::begin(providers), std::end(providers)), preferred);
 
 	std::unique_ptr<AudioProvider> provider;
 	bool found_file = false;
@@ -124,19 +122,21 @@ std::unique_ptr<agi::AudioProvider> AudioProviderManager::Create(agi::fs::path c
 	throw InternalError("Invalid audio caching method");
 }
 
-agi::registry<AudioProviderFactory>& AudioProviderManager::GetRegistry()
+agi::registry<Factory>& GetRegistry()
 {
 	return _registry;
 }
 
 START_HOOK_BEGIN(audioProvider)
-#define DEFINE_AUDIO_PROVIDER(name, func, hidden) _registry.register_entry(#name, std::make_unique<AudioProviderFactory>(std::string(#name), func, hidden ))
-    DEFINE_AUDIO_PROVIDER(Dummy, CreateDummyAudioProvider, true);
-    DEFINE_AUDIO_PROVIDER(PCM, CreatePCMAudioProvider, true);
+#define DEFINE_AUDIO_PROVIDER(name, func, hidden) _registry.register_entry(#name, std::make_unique<Factory>(std::string(#name), func, hidden ))
+DEFINE_AUDIO_PROVIDER(Dummy, CreateDummyAudioProvider, true);
+DEFINE_AUDIO_PROVIDER(PCM, CreatePCMAudioProvider, true);
 #ifdef WITH_FFMS2
-    DEFINE_AUDIO_PROVIDER(FFmpegSource, CreateFFmpegSourceAudioProvider, false);
+DEFINE_AUDIO_PROVIDER(FFmpegSource, CreateFFmpegSourceAudioProvider, false);
 #endif
 #ifdef WITH_AVISYNTH
-	DEFINE_AUDIO_PROVIDER(Avisynth, CreateAvisynthAudioProvider, false);
+DEFINE_AUDIO_PROVIDER(Avisynth, CreateAvisynthAudioProvider, false);
 #endif
 START_HOOK_END
+
+}

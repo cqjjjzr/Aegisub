@@ -71,7 +71,7 @@ void AsyncVideoProvider::ProcFrame(VideoFrame& frame, int frame_number, double t
 
 static std::unique_ptr<SubtitlesProvider> get_subs_provider(wxEvtHandler *evt_handler, agi::BackgroundRunner *br) {
 	try {
-		return SubtitlesProviderFactory::GetProvider(br);
+		return subtitles_provider::GetProvider(br);
 	}
 	catch (agi::Exception const& err) {
 		evt_handler->AddPendingEvent(SubtitlesProviderErrorEvent(err.GetMessage()));
@@ -82,7 +82,7 @@ static std::unique_ptr<SubtitlesProvider> get_subs_provider(wxEvtHandler *evt_ha
 AsyncVideoProvider::AsyncVideoProvider(agi::fs::path const& video_filename, std::string const& colormatrix, wxEvtHandler *parent, agi::BackgroundRunner *br)
 : worker(agi::dispatch::Create())
 , subs_provider(get_subs_provider(parent, br))
-, source_provider(VideoProviderFactory::GetProvider(video_filename, colormatrix, br))
+, source_provider(video_provider::GetProvider(video_filename, colormatrix, br))
 , parent(parent)
 , random_dist(1, 1e6)
 {

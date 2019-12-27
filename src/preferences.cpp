@@ -365,10 +365,10 @@ void Advanced_Audio(wxTreebook *book, Preferences *parent) {
 
 	auto expert = p->PageSizer(_("Expert"));
 
-	wxArrayString ap_choice = to_wx(AudioProviderManager::GetNames());
+	wxArrayString ap_choice = to_wx(audio_provider::GetNames());
 	p->OptionChoice(expert, _("Audio provider"), ap_choice, "Audio/Provider");
 
-	wxArrayString apl_choice = to_wx(AudioPlayerManager::GetNames());
+	wxArrayString apl_choice = to_wx(audio_player::GetNames());
 	p->OptionChoice(expert, _("Audio player"), apl_choice, "Audio/Player");
 
 	auto cache = p->PageSizer(_("Cache"));
@@ -428,10 +428,10 @@ void Advanced_Video(wxTreebook *book, Preferences *parent) {
 
 	auto expert = p->PageSizer(_("Expert"));
 
-	wxArrayString vp_choice = to_wx(VideoProviderFactory::GetClasses());
+	wxArrayString vp_choice = to_wx(video_provider::GetClasses());
 	p->OptionChoice(expert, _("Video provider"), vp_choice, "Video/Provider");
 
-	wxArrayString sp_choice = to_wx(SubtitlesProviderFactory::GetClasses());
+	wxArrayString sp_choice = to_wx(subtitles_provider::GetClasses());
 	p->OptionChoice(expert, _("Subtitles provider"), sp_choice, "Subtitle/Provider");
 
 #ifdef WITH_AVISYNTH
