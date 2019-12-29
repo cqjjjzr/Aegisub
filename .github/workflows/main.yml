@@ -92,7 +92,7 @@ jobs:
       working-directory : build-dir
       run: |
         cmake --build . -j 2
-        cmake --build . -t test-aegisub -j 2
+        cmake --build . -t test-aegisub -j 2 --config Release
     - name : Test
       working-directory : build-dir
       run: |
