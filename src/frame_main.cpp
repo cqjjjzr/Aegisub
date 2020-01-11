@@ -37,6 +37,7 @@
 #include "include/aegisub/menu.h"
 #include "include/aegisub/toolbar.h"
 #include "include/aegisub/hotkey.h"
+#include "include/aegisub/menu_initializer.h"
 
 #include "ass_file.h"
 #include "async_video_provider.h"
@@ -73,6 +74,11 @@
 enum {
 	ID_APP_TIMER_STATUSCLEAR = 12002
 };
+
+namespace menu {
+extern agi::id_allocator* builtinAllocator;
+}
+std::vector<menu::MenuNode> GetMainMenu(agi::Context*);
 
 #ifdef WITH_STARTUPLOG
 #define StartupLog(a) wxMessageBox(a, "Aegisub startup log")
@@ -133,7 +139,7 @@ FrameMain::FrameMain()
 	EnableToolBar(*OPT_GET("App/Show Toolbar"));
 
 	StartupLog("Initialize menu bar");
-	menu::GetMenuBar("main", this, context.get());
+	menu::AttachMenuBar(GetMainMenu, this, context.get(), menu::builtinAllocator);
 
 	StartupLog("Create status bar");
 	CreateStatusBar(2);
