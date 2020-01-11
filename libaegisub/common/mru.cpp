@@ -22,72 +22,48 @@
 #include "libaegisub/option.h"
 #include "libaegisub/option_value.h"
 
-namespace {
-const char *mru_names[] = {
-	"Audio",
-	"Find",
-	"Keyframes",
-	"Replace",
-	"Subtitle",
-	"Timecodes",
-	"Video",
-};
-
-const char *option_names[] = {
-	"Limits/MRU",
-	"Limits/Find Replace",
-	"Limits/MRU",
-	"Limits/Find Replace",
-	"Limits/MRU",
-	"Limits/MRU",
-	"Limits/MRU",
-};
-
-int mru_index(const char *key) {
-	int i;
-	switch (*key) {
-	case 'A': i = 0; break;
-	case 'F': i = 1; break;
-	case 'K': i = 2; break;
-	case 'R': i = 3; break;
-	case 'S': i = 4; break;
-	case 'T': i = 5; break;
-	case 'V': i = 6; break;
-	default: return -1;
-	}
-	return strcmp(key, mru_names[i]) == 0 ? i : -1;
-}
-}
+#include <boost/range/adaptor/reversed.hpp>
 
 namespace agi {
+std::vector<mru::MRUDescriptor> mrus;
 MRUManager::MRUManager(agi::fs::path const& config, std::string default_config, agi::Options *options)
 : config_name(config)
 , options(options)
 {
 	LOG_D("agi/mru") << "Loading MRU List";
 
+	for (auto& desc : mrus)
+	{
+		mru[desc.name] = MRU{ MRUListMap(), desc.handler, desc.config_name };
+	}
 	auto root = json_util::file(config, default_config);
 	for (auto const& it : static_cast<json::Object const&>(root))
-		Load(it.first.c_str(), it.second);
+		Load(it.first, it.second);
 }
 
-MRUManager::MRUListMap &MRUManager::Find(const char *key) {
-	auto index = mru_index(key);
-	if (index == -1)
-		throw MRUError("Invalid key value");
-	return mru[index];
+MRUListMap &MRUManager::Find(const char *key) {
+	return GetMRU(key)->entries;
+}
+
+void mru::RegisterMRU(MRUDescriptor const& m)
+{
+	mrus.push_back(m);
 }
 
 void MRUManager::Add(const char *key, agi::fs::path const& entry) {
 	MRUListMap &map = Find(key);
 	auto it = find(begin(map), end(map), entry);
-	if (it == begin(map) && it != end(map))
+	if (it == begin(map) && it != end(map)) // Already the first entry
 		return;
-	if (it != end(map))
+	if (it != end(map)) // Move the entry to the first
+	{
 		rotate(begin(map), it, it + 1);
+		FireModifiedMru(MoveUp, std::string(key), entry);
+	}
 	else {
 		map.insert(begin(map), entry);
 		Prune(key, map);
+		FireModifiedMru(MruModificationType::Add, std::string(key), entry);
 	}
 
 	Flush();
@@ -96,11 +72,20 @@ void MRUManager::Add(const char *key, agi::fs::path const& entry) {
 void MRUManager::Remove(const char *key, agi::fs::path const& entry) {
 	auto& map = Find(key);
 	map.erase(remove(begin(map), end(map), entry), end(map));
+	FireModifiedMru(MruModificationType::Remove, std::string(key), entry);
 	Flush();
 }
 
-const MRUManager::MRUListMap* MRUManager::Get(const char *key) {
+const MRUListMap* MRUManager::Get(const char *key) {
 	return &Find(key);
+}
+
+MRU* MRUManager::GetMRU(std::string const& key)
+{
+	auto ptr = mru.find(key);
+	if (ptr == mru.end())
+		throw MRUError("Invalid key value");
+	return &ptr->second;
 }
 
 agi::fs::path const& MRUManager::GetEntry(const char *key, const size_t entry) {
@@ -114,38 +99,52 @@ agi::fs::path const& MRUManager::GetEntry(const char *key, const size_t entry) {
 void MRUManager::Flush() {
 	json::Object out;
 
-	for (size_t i = 0; i < mru.size(); ++i) {
-		json::Array &array = out[mru_names[i]];
-		for (auto const& p : mru[i])
+	for (auto& [name, m] : mru)
+	{
+		json::Array& array = out[name];
+		for (auto const& p : m.entries)
 			array.push_back(p.string());
 	}
 
 	agi::JsonWriter::Write(out, io::Save(config_name).Get());
 }
 
-void MRUManager::Prune(const char *key, MRUListMap& map) const {
+void MRUManager::Prune(std::string const& key, MRUListMap& map) {
+	auto keyStr = std::string(key);
 	size_t limit = 16u;
 	if (options) {
-		int idx = mru_index(key);
-		if (idx != -1)
-			limit = (size_t)options->Get(option_names[idx])->GetInt();
+		auto idx = mru.find(key);
+		if (idx != mru.end())
+			limit = static_cast<size_t>(options->Get(idx->second.config_name)->GetInt());
 	}
-	map.resize(std::min(limit, map.size()));
+	if (map.size() > limit)
+		for (auto it = map.begin() + limit; it != map.end();)
+		{
+		    agi::fs::path path = *it;
+			it = map.erase(it);
+			FireModifiedMru(MruModificationType::Remove, keyStr, path);
+		}
 }
 
-void MRUManager::Load(const char *key, const json::Array& array) {
-	int idx = mru_index(key);
-	if (idx == -1) return;
+void MRUManager::Load(std::string const& key, const json::Array& array) {
+	auto keyStr = std::string(key);
+	auto ptr = mru.find(key);
+	if (ptr == mru.end()) return;
+	auto& entries = ptr->second.entries;
 
 	try {
-		mru[idx].reserve(array.size());
-		for (std::string const& str : array)
-			mru[idx].push_back(str);
+		entries.reserve(array.size());
+		for (std::string const& str : boost::adaptors::reverse(array))
+		{
+			auto path = agi::fs::path(str);
+			FireModifiedMru(MruModificationType::Add, keyStr, path);;
+			entries.insert(entries.begin(), path);
+		}
 	}
 	catch (json::Exception const&) {
 		// Out of date MRU file; just discard the data and skip it
 	}
-	Prune(key, mru[idx]);
+	Prune(key, entries);
 }
 
 }

@@ -32,6 +32,7 @@
 #include "include/aegisub/context.h"
 #include "include/aegisub/hotkey.h"
 #include "include/aegisub/menu.h"
+#include "include/aegisub/menu_initializer.h"
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
@@ -54,6 +55,11 @@
 #include <wx/menu.h>
 #include <wx/scrolbar.h>
 #include <wx/sizer.h>
+
+namespace menu {
+extern agi::id_allocator* builtinAllocator;
+}
+std::vector<menu::MenuNode> GetGridContextMenu(agi::Context*);
 
 enum {
 	GRID_SCROLLBAR = 1730,
@@ -541,7 +547,7 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 	wxPoint pos = evt.GetPosition();
 	if (pos == wxDefaultPosition || ScreenToClient(pos).y > lineHeight) {
-		if (!context_menu) context_menu = menu::GetMenu("grid_context", context);
+		if (!context_menu) context_menu = menu::GetMenu(GetGridContextMenu, context, menu::builtinAllocator);
 		menu::OpenPopupMenu(context_menu.get(), this);
 	}
 	else {

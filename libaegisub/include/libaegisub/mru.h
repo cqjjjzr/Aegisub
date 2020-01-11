@@ -12,12 +12,17 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+#pragma once
+
 #include <array>
 #include <boost/filesystem/path.hpp>
+#include <unordered_map>
 #include <vector>
+#include <functional>
 
 #include <libaegisub/exception.h>
 #include <libaegisub/fs_fwd.h>
+#include <libaegisub/signal.h>
 
 namespace json {
 	class UnknownElement;
@@ -25,9 +30,28 @@ namespace json {
 }
 
 namespace agi {
+struct Context;
 class Options;
 
 DEFINE_EXCEPTION(MRUError, Exception);
+
+enum MruModificationType
+{
+    Add = 1,
+	Remove = 2,
+	MoveUp = 3
+};
+
+using MRUHandler = std::function<void(agi::Context*, agi::fs::path const&)>;
+using MRUListMap = std::vector<agi::fs::path>;
+
+class MRU
+{
+public:
+	MRUListMap entries;
+	MRUHandler handler;
+	std::string config_name;
+};
 
 /// @class MRUManager
 /// @brief Most Recently Used (MRU) list handling
@@ -38,9 +62,6 @@ DEFINE_EXCEPTION(MRUError, Exception);
 /// If a file fails to open, Remove() should be called.
 class MRUManager {
 public:
-	/// @brief Map for time->value pairs.
-	using MRUListMap = std::vector<agi::fs::path>;
-
 	/// @brief Constructor
 	/// @param config File to load MRU values from
 	MRUManager(agi::fs::path const& config, std::string default_config, agi::Options *options = nullptr);
@@ -66,6 +87,8 @@ public:
 	/// @exception MRUError thrown when an invalid key is used.
 	const MRUListMap* Get(const char *key);
 
+	MRU* GetMRU(std::string const& key);
+
 	/// @brief Return A single entry in a list.
 	/// @param key List name
 	/// @param entry 0-base position of entry
@@ -76,6 +99,7 @@ public:
 	void Flush();
 
 private:
+	agi::signal::Signal<MruModificationType, std::string const&, agi::fs::path const&> FireModifiedMru;
 	/// Internal name of the config file, set during object construction.
 	const agi::fs::path config_name;
 
@@ -83,16 +107,31 @@ private:
 	agi::Options *const options;
 
 	/// Internal MRUMap values.
-	std::array<MRUListMap, 7> mru;
+	std::unordered_map<std::string, MRU> mru;
 
 	/// @brief Load MRU Lists.
 	/// @param key List name.
 	/// @param array json::Array of values.
-	void Load(const char *key, ::json::Array const& array);
+	void Load(std::string const& key, ::json::Array const& array);
 	/// @brief Prune MRUListMap to the desired length.
 	/// This uses the user-set values for MRU list length.
-	void Prune(const char *key, MRUListMap& map) const;
+	void Prune(std::string const& key, MRUListMap& map);
 	MRUListMap &Find(const char *key);
+
+public:
+	DEFINE_SIGNAL_ADDERS(FireModifiedMru, AddMruModificationListener)
 };
+
+namespace mru
+{
+class MRUDescriptor
+{
+public:
+	std::string name;
+	MRUHandler handler;
+	std::string config_name;
+};
+void RegisterMRU(MRUDescriptor const&);
+}
 
 } // namespace agi

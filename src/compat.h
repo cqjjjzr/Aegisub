@@ -16,4 +16,6 @@ wxArrayString to_wx(std::vector<std::string> const& vec);
 agi::Color from_wx(wxColour color);
 std::string from_wx(wxString const& str);
 
+std::string GetTranslation_std(std::string const& str);
+
 wxArrayString lagi_MRU_wxAS(const char *list);

@@ -42,6 +42,7 @@
 #include "include/aegisub/context.h"
 #include "include/aegisub/hotkey.h"
 #include "include/aegisub/menu.h"
+#include "include/aegisub/menu_initializer.h"
 #include "options.h"
 #include "project.h"
 #include "retina_helper.h"
@@ -65,6 +66,11 @@
 #else
 #include <GL/gl.h>
 #endif
+
+namespace menu {
+extern agi::id_allocator* builtinAllocator;
+}
+std::vector<menu::MenuNode> GetVideoContextMenu(agi::Context*);
 
 /// Attribute list for gl canvases; set the canvases to doublebuffered rgba with an 8 bit stencil buffer
 int attribList[] = { WX_GL_RGBA , WX_GL_DOUBLEBUFFER, WX_GL_STENCIL_SIZE, 8, 0 };
@@ -375,7 +381,7 @@ void VideoDisplay::OnMouseWheel(wxMouseEvent& event) {
 }
 
 void VideoDisplay::OnContextMenu(wxContextMenuEvent&) {
-	if (!context_menu) context_menu = menu::GetMenu("video_context", con);
+	if (!context_menu) context_menu = menu::GetMenu(GetVideoContextMenu, con, menu::builtinAllocator);
 	SetCursor(wxNullCursor);
 	menu::OpenPopupMenu(context_menu.get(), this);
 }

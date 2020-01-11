@@ -178,6 +178,10 @@ add_executable(Aegisub WIN32
     src/autoreghook.cpp
     #src/auidemo.cpp
     src/main_toolbar.cpp
+    src/menu_builtin.cpp
+    src/menu_dynamic_builtin.cpp
+    src/menu_dynamic.cpp
+    src/mru_builtin.cpp
 )
 
 target_link_libraries(Aegisub ${CMAKE_DL_LIBS} libaegisub)

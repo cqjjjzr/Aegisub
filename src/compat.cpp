@@ -35,3 +35,8 @@ agi::Color from_wx(wxColour color) {
 std::string from_wx(wxString const& str) {
 	return std::string(str.utf8_str());
 }
+
+std::string GetTranslation_std(std::string const& str)
+{
+	return from_wx(wxGetTranslation(to_wx(str)));
+}

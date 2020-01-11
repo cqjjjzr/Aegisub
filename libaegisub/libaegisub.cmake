@@ -47,6 +47,7 @@ add_library(libaegisub STATIC
     libaegisub/common/ycbcr_conv.cpp
     libaegisub/common/dispatch.cpp
     libaegisub/common/resources_fs.cpp
+    libaegisub/common/id_allocator.cpp
 )
 
 if(UNIX)

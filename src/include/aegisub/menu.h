@@ -15,13 +15,24 @@
 /// @file menu.h
 /// @brief Dynamic menu and toolbar generator.
 /// @ingroup menu toolbar
+#pragma once
 
 #include <memory>
 #include <string>
 
 #include <libaegisub/exception.h>
+#include "libaegisub/signal.h"
+#include "menu_dynamic.h"
 
-namespace agi { struct Context; }
+namespace cmd {
+    class Command;
+}
+
+namespace agi
+{
+    struct Context;
+	class id_allocator;
+}
 
 class wxFrame;
 class wxMenu;
@@ -33,13 +44,33 @@ namespace menu {
 	DEFINE_EXCEPTION(UnknownMenu, Error);
 	DEFINE_EXCEPTION(InvalidMenu, Error);
 
+	class UpdateableMenu : public wxMenu
+	{
+	public:
+		virtual void UpdateMenu() = 0;
+	};
+	/// Wrapper for wxMenu to add a command manager
+	struct CommandMenu final : public wxMenu {
+		DynamicMenuHelper cm;
+		CommandMenu(agi::Context* c, agi::id_allocator* allocator) : cm(c, allocator) {}
+	};
+
+	/// Wrapper for wxMenuBar to add a command manager
+	struct CommandMenuBar final : public wxMenuBar {
+		DynamicMenuHelper cm;
+		CommandMenuBar(agi::Context* c, agi::id_allocator* allocator) : cm(c, allocator) { }
+	};
+
+	class MenuNode;
+	using MenuProvider = std::function<std::vector<MenuNode>(agi::Context*)>;
+
 	/// @brief Get the menu with the specified name as a wxMenuBar
 	/// @param name Name of the menu
 	///
 	/// Throws:
 	///     UnknownMenu if no menu with the given name was found
 	///     BadMenu if there is a menu with the given name, but it is invalid
-	void GetMenuBar(std::string const& name, wxFrame *window, agi::Context *c);
+	void AttachMenuBar(MenuProvider provider, wxFrame *window, agi::Context *c, agi::id_allocator* allocator);
 
 	/// @brief Get the menu with the specified name as a wxMenu
 	/// @param name Name of the menu
@@ -47,7 +78,7 @@ namespace menu {
 	/// Throws:
 	///     UnknownMenu if no menu with the given name was found
 	///     BadMenu if there is a menu with the given name, but it is invalid
-	std::unique_ptr<wxMenu> GetMenu(std::string const& name, agi::Context *c);
+	std::unique_ptr<wxMenu> GetMenu(MenuProvider provider, agi::Context *c, agi::id_allocator* allocator);
 
 	/// @brief Open a popup menu at the mouse
 	/// @param menu Menu to open
